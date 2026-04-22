@@ -1,0 +1,184 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-primary: #0d0c0a;
+    --bg-secondary: #1a1814;
+    --bg-card: #22201c;
+    --bg-elevated: #2a2824;
+    --border: rgba(255,255,255,0.08);
+    --border-hover: rgba(255,255,255,0.16);
+    --text-primary: #f5f4ef;
+    --text-secondary: #a09880;
+    --text-muted: #5a5648;
+    --accent-gold: #c9a84c;
+    --accent-gold-light: #e8d5a3;
+    --accent-green: #4a7c59;
+    --accent-rust: #b5451b;
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: rgba(201, 168, 76, 0.3);
+    color: var(--text-primary);
+  }
+}
+
+@layer components {
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #3a3830; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #4a4840; }
+
+  /* ── Glass card ── */
+  .glass {
+    background: rgba(34, 32, 28, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+  }
+
+  /* ── Gradient text ── */
+  .text-gradient {
+    background: linear-gradient(135deg, #e8d5a3 0%, #c9a84c 50%, #a07830 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── Glow effect ── */
+  .glow-gold {
+    box-shadow: 0 0 40px rgba(201, 168, 76, 0.15), 0 0 80px rgba(201, 168, 76, 0.05);
+  }
+
+  /* ── Noise texture overlay ── */
+  .noise::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    opacity: 0.4;
+  }
+
+  /* ── Form inputs ── */
+  .input-field {
+    @apply w-full px-3 py-2.5 bg-obsidian-900 border border-obsidian-700 rounded-lg
+    text-sm text-obsidian-100 placeholder-obsidian-500
+    focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20
+    transition-all duration-200;
+  }
+
+  .input-label {
+    @apply block text-xs font-medium tracking-wider uppercase text-obsidian-400 mb-1.5;
+  }
+
+  /* ── Buttons ── */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-lg
+    bg-amber-500 hover:bg-amber-400 text-obsidian-950
+    font-semibold text-sm tracking-wide
+    transition-all duration-200 hover:shadow-lg hover:shadow-amber-500/20
+    active:scale-[0.98];
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-lg
+    bg-obsidian-800 hover:bg-obsidian-700 text-obsidian-100
+    font-medium text-sm border border-obsidian-600
+    transition-all duration-200
+    active:scale-[0.98];
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg
+    hover:bg-obsidian-800 text-obsidian-300 hover:text-obsidian-100
+    font-medium text-sm
+    transition-all duration-200;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-md
+    text-xs font-medium text-red-400 hover:text-red-300
+    hover:bg-red-500/10 border border-transparent hover:border-red-500/20
+    transition-all duration-200;
+  }
+
+  /* ── Card ── */
+  .card {
+    @apply bg-obsidian-900 border border-obsidian-800 rounded-xl;
+  }
+
+  /* ── Section entry card ── */
+  .entry-card {
+    @apply bg-obsidian-900/50 border border-obsidian-700/50 rounded-lg p-4 
+    hover:border-obsidian-600/50 transition-colors duration-200;
+  }
+
+  /* ── Sidebar nav item ── */
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+    text-obsidian-400 hover:text-obsidian-100 hover:bg-obsidian-800
+    transition-all duration-200 cursor-pointer;
+  }
+
+  .nav-item.active {
+    @apply text-amber-400 bg-amber-500/10 border border-amber-500/20;
+  }
+
+  /* ── TipTap editor ── */
+  .tiptap-editor {
+    @apply min-h-[120px] text-sm text-obsidian-200 focus:outline-none;
+  }
+
+  .tiptap-editor p { @apply mb-2; }
+  .tiptap-editor ul { @apply list-disc list-inside mb-2 space-y-1; }
+  .tiptap-editor ol { @apply list-decimal list-inside mb-2 space-y-1; }
+  .tiptap-editor strong { @apply font-semibold text-obsidian-100; }
+  .tiptap-editor em { @apply italic; }
+
+  /* ── CV Preview Sheet ── */
+  .cv-preview-sheet {
+    font-family: 'DM Sans', sans-serif;
+    background: white;
+    color: #1a1814;
+  }
+
+  /* ── Stagger animation ── */
+  .stagger-child {
+    opacity: 0;
+    animation: fadeUp 0.4s ease forwards;
+  }
+  .stagger-child:nth-child(1) { animation-delay: 0.05s; }
+  .stagger-child:nth-child(2) { animation-delay: 0.10s; }
+  .stagger-child:nth-child(3) { animation-delay: 0.15s; }
+  .stagger-child:nth-child(4) { animation-delay: 0.20s; }
+  .stagger-child:nth-child(5) { animation-delay: 0.25s; }
+  .stagger-child:nth-child(6) { animation-delay: 0.30s; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Print ── */
+  @media print {
+    body > *:not(#cv-print-target) { display: none !important; }
+    #cv-print-target { display: block !important; }
+  }
+}
