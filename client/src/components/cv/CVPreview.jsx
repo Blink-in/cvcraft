@@ -6,6 +6,8 @@ import ModernTemplate from './templates/ModernTemplate.jsx'
 import MinimalTemplate from './templates/MinimalTemplate.jsx'
 import ExecutiveTemplate from './templates/ExecutiveTemplate.jsx'
 import CreativeTemplate from './templates/CreativeTemplate.jsx'
+import ElegantTemplate from './templates/ElegantTemplate.jsx'
+import ProfessionalTemplate from './templates/ProfessionalTemplate.jsx'
 
 const TEMPLATES = {
   classic: ClassicTemplate,
@@ -13,6 +15,8 @@ const TEMPLATES = {
   minimal: MinimalTemplate,
   executive: ExecutiveTemplate,
   creative: CreativeTemplate,
+  elegant: ElegantTemplate,
+  professional: ProfessionalTemplate,
 }
 
 export default function CVPreview({ cv, forExport = false }) {

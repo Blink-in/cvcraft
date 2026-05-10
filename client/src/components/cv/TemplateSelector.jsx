@@ -7,6 +7,8 @@ const TEMPLATES = [
   { id: 'minimal', name: 'Minimal', desc: 'Pure type, no distractions', colors: ['#ffffff', '#1a1814', '#e5e0d6'] },
   { id: 'executive', name: 'Executive', desc: 'Slate, senior-level gravitas', colors: ['#1e293b', '#94a3b8', '#f1f5f9'] },
   { id: 'creative', name: 'Creative', desc: 'Purple diagonal, bold', colors: ['#1a0a2e', '#a855f7', '#faf5ff'] },
+  { id: 'elegant', name: 'Elegant', desc: 'Sophisticated serif, luxurious feel', colors: ['#2d2d2d', '#8b7355', '#fdf6e3'] },
+  { id: 'professional', name: 'Professional', desc: 'Clean corporate, trusted standard', colors: ['#1565c0', '#42a5f5', '#ffffff'] },
 ]
 
 export default function TemplateSelector({ cvId, cv, onClose }) {

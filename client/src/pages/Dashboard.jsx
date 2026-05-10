@@ -233,4 +233,6 @@ const TEMPLATE_COLORS = {
   minimal: '#94a3b8',
   executive: '#64748b',
   creative: '#a855f7',
+  elegant: '#8b7355',
+  professional: '#42a5f5',
 }
