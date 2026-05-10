@@ -9,6 +9,9 @@
     "install:all": "npm install && cd client && npm install && cd ../server && npm install",
     "build": "cd client && npm run build"
   },
+  "dependencies": {
+    "mongoose": "^8.3.4"
+  },
   "devDependencies": {
     "concurrently": "^8.2.2"
   }
