@@ -1,6 +1,7 @@
 {
   "name": "cvcraft",
   "version": "1.0.0",
+  "type": "module",
   "description": "Professional CV & Cover Letter Builder — MERN Stack",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
