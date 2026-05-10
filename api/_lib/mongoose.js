@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+const mongoose = require('mongoose')
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/cvcraft'
 
@@ -8,7 +8,7 @@ if (!cached) {
   cached = global.mongoose = { conn: null, promise: null }
 }
 
-export async function connectDB() {
+async function connectDB() {
   if (cached.conn) return cached.conn
 
   if (!cached.promise) {
@@ -31,3 +31,5 @@ export async function connectDB() {
 
   return cached.conn
 }
+
+module.exports = { connectDB }

@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+const mongoose = require('mongoose')
 
 const coverLetterSchema = new mongoose.Schema(
   {
@@ -17,4 +17,4 @@ const coverLetterSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-export default mongoose.models.CoverLetter || mongoose.model('CoverLetter', coverLetterSchema)
+module.exports = mongoose.models.CoverLetter || mongoose.model('CoverLetter', coverLetterSchema)

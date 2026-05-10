@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+const mongoose = require('mongoose')
 
 const cvSchema = new mongoose.Schema(
   {
@@ -13,4 +13,4 @@ const cvSchema = new mongoose.Schema(
   { timestamps: true }
 )
 
-export default mongoose.models.CV || mongoose.model('CV', cvSchema)
+module.exports = mongoose.models.CV || mongoose.model('CV', cvSchema)

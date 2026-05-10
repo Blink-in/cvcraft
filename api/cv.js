@@ -1,18 +1,15 @@
-import { connectDB } from './_lib/mongoose'
-import CV from './_lib/models/CV'
+const { connectDB } = require('./_lib/mongoose')
+const CV = require('./_lib/models/CV')
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   await connectDB()
 
-  // Handle both /api/cv and /api/cv/:sessionId
   const { method } = req
   const { sessionId, id } = req.query
 
   switch (method) {
     case 'GET':
       try {
-        // If sessionId is in query (from /cv/:sessionId path), use it
-        // Otherwise return empty array
         const cvs = await CV.find({ sessionId }).sort({ updatedAt: -1 })
         res.status(200).json(cvs)
       } catch (err) {

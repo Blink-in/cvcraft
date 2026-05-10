@@ -1,7 +1,7 @@
-import { connectDB } from './_lib/mongoose'
-import CoverLetter from './_lib/models/CoverLetter'
+const { connectDB } = require('./_lib/mongoose')
+const CoverLetter = require('./_lib/models/CoverLetter')
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   await connectDB()
 
   const { method } = req
