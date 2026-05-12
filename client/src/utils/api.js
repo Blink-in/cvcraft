@@ -8,18 +8,18 @@ const api = axios.create({
 
 // ── CV ────────────────────────────────────────────────────────────────────
 export const cvAPI = {
-  getBySession: (sessionId) => api.get(`/cv/${sessionId}`),
+  getBySession: (sessionId) => api.get(`/cv?sessionId=${sessionId}`),
   create: (data) => api.post('/cv', data),
-  update: (id, data) => api.put(`/cv/${id}`, data),
-  delete: (id) => api.delete(`/cv/${id}`),
+  update: (id, data) => api.put(`/cv?id=${id}`, data),
+  delete: (id) => api.delete(`/cv?id=${id}`),
 }
 
 // ── Cover Letter ──────────────────────────────────────────────────────────
 export const coverLetterAPI = {
-  getBySession: (sessionId) => api.get(`/cover-letter/${sessionId}`),
+  getBySession: (sessionId) => api.get(`/cover-letter?sessionId=${sessionId}`),
   create: (data) => api.post('/cover-letter', data),
-  update: (id, data) => api.put(`/cover-letter/${id}`, data),
-  delete: (id) => api.delete(`/cover-letter/${id}`),
+  update: (id, data) => api.put(`/cover-letter?id=${id}`, data),
+  delete: (id) => api.delete(`/cover-letter?id=${id}`),
 }
 
 export default api
