@@ -1,0 +1,6 @@
+{
+  "name": "cvcraft-api",
+  "dependencies": {
+    "mongoose": "^8.3.4"
+  }
+}
