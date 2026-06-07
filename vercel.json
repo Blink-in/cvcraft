@@ -12,7 +12,7 @@
       "source": "/(.*)",
       "has": [ { "type": "host", "value": "www.getcvcraft.com" } ],
       "destination": "https://getcvcraft.com/$1",
-      "permanent": true
+      "permanent": false
     }
   ]
 }
