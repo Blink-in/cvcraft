@@ -22,4 +22,16 @@ export const coverLetterAPI = {
   delete: (id) => api.delete(`/cover-letter?id=${id}`),
 }
 
+export const paymentAPI = {
+  getStatus: (sessionId, cvId, params = {}) => {
+    const query = new URLSearchParams({ action: 'status', sessionId, cvId })
+    Object.entries(params).forEach(([key, value]) => {
+      if (value) query.set(key, value)
+    })
+    return api.get(`/payment?${query.toString()}`)
+  },
+  createCheckout: (data) => api.post('/payment?action=checkout', data),
+  recordAdUnlock: (data) => api.post('/payment?action=ad-unlock', data),
+}
+
 export default api

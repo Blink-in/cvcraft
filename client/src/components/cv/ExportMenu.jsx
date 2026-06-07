@@ -1,28 +1,123 @@
 import { useState } from 'react'
-import { X, FileDown, FileJson, Printer, Loader2 } from 'lucide-react'
+import { X, FileDown, FileJson, Printer, Loader2, BadgeDollarSign, Clapperboard, ShieldCheck, RefreshCw } from 'lucide-react'
 import { exportCVasPDF } from '../../utils/exportPDF.js'
 import { downloadJSON } from '../../utils/io.js'
+import { paymentAPI } from '../../utils/api.js'
+import { useStore } from '../../store/index.js'
 
 export default function ExportMenu({ cv, onClose }) {
   const [loading, setLoading] = useState(null)
+  const [error, setError] = useState('')
+  const [adOpen, setAdOpen] = useState(false)
+  const [adSeconds, setAdSeconds] = useState(0)
+  const sessionId = useStore(s => s.sessionId)
+  const { updateCVPayment, markCVDownloaded, unlockCVAccess } = useStore()
+
+  const downloadUnlocked = cv.monetization?.downloadUnlocked
+
+  const refreshEntitlement = async () => {
+    setLoading('refresh')
+    setError('')
+    try {
+      const { data } = await paymentAPI.getStatus(sessionId, cv.id)
+      const paidSource = data.entitlements?.find(e => e.source && e.source !== 'rewarded_ad')?.source || cv.monetization?.unlockedBy
+      updateCVPayment(cv.id, {
+        downloadUnlocked: Boolean(data.downloadUnlocked || cv.monetization?.downloadUnlocked),
+        editUnlocked: Boolean(data.editUnlocked || cv.monetization?.editUnlocked),
+        paidAt: data.downloadUnlocked ? new Date().toISOString() : cv.monetization?.paidAt,
+        unlockedBy: data.downloadUnlocked ? paidSource : cv.monetization?.unlockedBy,
+      })
+    } catch (err) {
+      setError(err.response?.data?.error || 'Could not verify payment yet. Try again in a moment.')
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  const startCheckout = async (provider, unlockType = 'download') => {
+    setLoading(`pay-${provider}-${unlockType}`)
+    setError('')
+    try {
+      const { data } = await paymentAPI.createCheckout({
+        provider,
+        sessionId,
+        cvId: cv.id,
+        cvTitle: cv.title,
+        unlockType,
+        redirectUrl: `${window.location.origin}/cv/${cv.id}?payment=success`,
+      })
+      updateCVPayment(cv.id, { lastCheckoutAt: new Date().toISOString() })
+      window.location.href = data.checkoutUrl
+    } catch (err) {
+      setError(err.response?.data?.error || 'Unable to start checkout.')
+      setLoading(null)
+    }
+  }
+
+  const startRewardedAd = async () => {
+    setError('')
+    setAdOpen(true)
+
+    if (window.CVCraftRewardedAd?.show) {
+      try {
+        const watched = await window.CVCraftRewardedAd.show()
+        if (watched) await completeAdUnlock()
+        else setError('Please finish the ad to unlock this CV.')
+      } catch {
+        setError('The ad provider was not available. Try paying or refresh and try again.')
+      } finally {
+        setAdOpen(false)
+      }
+      return
+    }
+
+    setAdSeconds(15)
+    let remaining = 15
+    const timer = window.setInterval(async () => {
+      remaining -= 1
+      setAdSeconds(remaining)
+      if (remaining <= 0) {
+        window.clearInterval(timer)
+        await completeAdUnlock()
+        setAdOpen(false)
+      }
+    }, 1000)
+  }
+
+  const completeAdUnlock = async () => {
+    setLoading('ad')
+    try {
+      await paymentAPI.recordAdUnlock({ sessionId, cvId: cv.id, unlockType: 'download' })
+    } catch {
+      // Local unlock still lets the rewarded-ad flow work during local development.
+    }
+    unlockCVAccess(cv.id, 'rewarded_ad', 'download')
+    setLoading(null)
+  }
 
   const handlePDF = async () => {
+    if (!downloadUnlocked) return
     setLoading('pdf')
     try {
       await exportCVasPDF(cv)
+      markCVDownloaded(cv.id)
     } finally {
       setLoading(null)
     }
   }
 
   const handleJSON = () => {
+    if (!downloadUnlocked) return
     setLoading('json')
     const json = JSON.stringify({ cv }, null, 2)
     downloadJSON(json, `${cv.title.replace(/\s+/g, '-').toLowerCase()}.json`)
+    markCVDownloaded(cv.id)
     setTimeout(() => setLoading(null), 600)
   }
 
   const handlePrint = () => {
+    if (!downloadUnlocked) return
+    markCVDownloaded(cv.id)
     window.print()
   }
 
@@ -35,10 +130,64 @@ export default function ExportMenu({ cv, onClose }) {
           <button onClick={onClose} className="btn-ghost p-1.5"><X size={15} /></button>
         </div>
 
+        {!downloadUnlocked && (
+          <div className="mb-4 rounded-lg border border-amber-500/25 bg-amber-500/10 p-3">
+            <div className="flex items-start gap-3">
+              <ShieldCheck size={18} className="mt-0.5 text-amber-300" />
+              <div>
+                <p className="text-sm font-semibold text-obsidian-100">Unlock this CV to download</p>
+                <p className="mt-1 text-xs leading-relaxed text-obsidian-400">
+                  Pay once with Paystack or Flutterwave, or watch a rewarded ad. Paid CVs can be downloaded again from your dashboard.
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                onClick={() => startCheckout('paystack', 'download')}
+                disabled={loading?.startsWith?.('pay')}
+                className="btn-primary justify-center py-2 text-xs"
+              >
+                {loading === 'pay-paystack-download' ? <Loader2 size={14} className="animate-spin" /> : <BadgeDollarSign size={14} />}
+                Paystack
+              </button>
+              <button
+                onClick={() => startCheckout('flutterwave', 'download')}
+                disabled={loading?.startsWith?.('pay')}
+                className="btn-secondary justify-center py-2 text-xs"
+              >
+                {loading === 'pay-flutterwave-download' ? <Loader2 size={14} className="animate-spin" /> : <BadgeDollarSign size={14} />}
+                Flutterwave
+              </button>
+              <button
+                onClick={startRewardedAd}
+                disabled={loading === 'ad'}
+                className="btn-secondary col-span-2 justify-center py-2 text-xs"
+              >
+                {loading === 'ad' ? <Loader2 size={14} className="animate-spin" /> : <Clapperboard size={14} />}
+                Watch Ad
+              </button>
+            </div>
+            <button
+              onClick={refreshEntitlement}
+              disabled={loading === 'refresh'}
+              className="mt-2 w-full btn-ghost justify-center py-1.5 text-[11px]"
+            >
+              {loading === 'refresh' ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+              I already paid
+            </button>
+          </div>
+        )}
+
+        {error && (
+          <p className="mb-3 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+            {error}
+          </p>
+        )}
+
         <div className="space-y-2.5">
           <button
             onClick={handlePDF}
-            disabled={loading === 'pdf'}
+            disabled={!downloadUnlocked || loading === 'pdf'}
             className="w-full flex items-center gap-4 p-4 rounded-xl border border-obsidian-700 hover:border-amber-500/40 hover:bg-amber-500/5 transition-all duration-200 text-left disabled:opacity-50"
           >
             <div className="w-10 h-10 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center flex-shrink-0">
@@ -52,6 +201,7 @@ export default function ExportMenu({ cv, onClose }) {
 
           <button
             onClick={handlePrint}
+            disabled={!downloadUnlocked}
             className="w-full flex items-center gap-4 p-4 rounded-xl border border-obsidian-700 hover:border-amber-500/40 hover:bg-amber-500/5 transition-all duration-200 text-left"
           >
             <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0">
@@ -65,7 +215,7 @@ export default function ExportMenu({ cv, onClose }) {
 
           <button
             onClick={handleJSON}
-            disabled={loading === 'json'}
+            disabled={!downloadUnlocked || loading === 'json'}
             className="w-full flex items-center gap-4 p-4 rounded-xl border border-obsidian-700 hover:border-amber-500/40 hover:bg-amber-500/5 transition-all duration-200 text-left disabled:opacity-50"
           >
             <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
@@ -83,6 +233,22 @@ export default function ExportMenu({ cv, onClose }) {
           JSON export lets you restore this CV on any device.
         </p>
       </div>
+
+      {adOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+          <div className="card w-full max-w-xs p-5 text-center">
+            <Clapperboard size={28} className="mx-auto mb-3 text-amber-300" />
+            <p className="text-sm font-semibold text-obsidian-100">Sponsored unlock</p>
+            <p className="mt-2 text-xs leading-relaxed text-obsidian-400">
+              Keep this window open until the ad finishes. Your CV unlocks automatically.
+            </p>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-obsidian-800">
+              <div className="h-full bg-amber-400 transition-all" style={{ width: `${((15 - adSeconds) / 15) * 100}%` }} />
+            </div>
+            <p className="mt-3 text-xs text-obsidian-500">{adSeconds}s remaining</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/index.js'
-import { Plus, FileText, Copy, Trash2, Clock, Download, Upload, ArrowLeft, Mail } from 'lucide-react'
+import { Plus, FileText, Copy, Trash2, Clock, Download, Upload, ArrowLeft, Mail, Lock, ShieldCheck } from 'lucide-react'
 import { formatDistanceToNow } from '../utils/date.js'
 import { downloadJSON, importJSON } from '../utils/io.js'
 import { useRef } from 'react'
@@ -126,6 +126,24 @@ export default function Dashboard() {
                       <span className="inline-block text-xs px-2 py-0.5 rounded bg-obsidian-800 text-obsidian-400 border border-obsidian-700 capitalize">
                         {cv.template} template
                       </span>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {cv.monetization?.downloadUnlocked ? (
+                          <span className="inline-flex items-center gap-1 rounded border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
+                            <ShieldCheck size={10} />
+                            Download paid
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-300">
+                            Preview only
+                          </span>
+                        )}
+                        {cv.monetization?.downloadedAt && !cv.monetization?.editUnlocked && (
+                          <span className="inline-flex items-center gap-1 rounded border border-obsidian-700 bg-obsidian-800 px-2 py-0.5 text-[10px] font-medium text-obsidian-300">
+                            <Lock size={10} />
+                            Edit locked
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
