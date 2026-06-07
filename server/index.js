@@ -10,8 +10,21 @@ const app = express()
 const PORT = process.env.PORT || 5000
 
 // ── Middleware ──────────────────────────────────────────────────────────────
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://www.getcvcraft.com',
+  'https://getcvcraft.com',
+]
+if (process.env.CLIENT_URL) {
+  allowedOrigins.push(process.env.CLIENT_URL)
+}
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true)
+    }
+    callback(new Error(`CORS blocked origin: ${origin}`))
+  },
   credentials: true,
 }))
 app.use(express.json({ limit: '10mb' }))

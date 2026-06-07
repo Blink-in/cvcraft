@@ -54,6 +54,14 @@ export const createEmptyCV = (overrides = {}) => ({
     },
   },
   sectionOrder: ['personal', 'experience', 'education', 'skills', 'projects', 'certifications'],
+  monetization: {
+    downloadUnlocked: false,
+    editUnlocked: true,
+    downloadedAt: null,
+    paidAt: null,
+    unlockedBy: null,
+    lastCheckoutAt: null,
+  },
   ...overrides,
 })
 
@@ -109,7 +117,14 @@ export const useStore = create(
       duplicateCV: (id) => {
         const cv = get().cvs.find(c => c.id === id)
         if (!cv) return
-        const duplicate = { ...cv, id: uuidv4(), title: `${cv.title} (Copy)`, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+        const duplicate = {
+          ...cv,
+          id: uuidv4(),
+          title: `${cv.title} (Copy)`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          monetization: createEmptyCV().monetization,
+        }
         set(state => ({ cvs: [...state.cvs, duplicate] }))
       },
 
@@ -308,6 +323,39 @@ export const useStore = create(
         get().updateCV(cvId, cv => ({
           ...cv,
           customization: { ...cv.customization, [field]: value }
+        }))
+      },
+
+      updateCVPayment: (cvId, patch) => {
+        get().updateCV(cvId, cv => ({
+          ...cv,
+          monetization: { ...(cv.monetization || {}), ...patch }
+        }))
+      },
+
+      markCVDownloaded: (cvId) => {
+        get().updateCV(cvId, cv => ({
+          ...cv,
+          monetization: {
+            ...(cv.monetization || {}),
+            downloadUnlocked: true,
+            editUnlocked: false,
+            downloadedAt: new Date().toISOString(),
+          }
+        }))
+      },
+
+      unlockCVAccess: (cvId, source = 'rewarded_ad', unlockType = 'download') => {
+        const paidSource = ['paystack', 'flutterwave', 'lemon_squeezy'].includes(source)
+        get().updateCV(cvId, cv => ({
+          ...cv,
+          monetization: {
+            ...(cv.monetization || {}),
+            downloadUnlocked: unlockType === 'download' ? true : cv.monetization?.downloadUnlocked,
+            editUnlocked: true,
+            paidAt: paidSource ? new Date().toISOString() : cv.monetization?.paidAt,
+            unlockedBy: source,
+          }
         }))
       },
 

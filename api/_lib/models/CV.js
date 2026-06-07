@@ -9,6 +9,7 @@ const cvSchema = new mongoose.Schema(
     customization: { type: mongoose.Schema.Types.Mixed, default: {} },
     sections: { type: mongoose.Schema.Types.Mixed, default: {} },
     sectionOrder: { type: [String], default: [] },
+    monetization: { type: mongoose.Schema.Types.Mixed, default: {} },
   },
   { timestamps: true }
 )

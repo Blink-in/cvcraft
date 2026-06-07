@@ -176,19 +176,31 @@ Add `_redirects` file for SPA routing (Netlify):
 
 ### Full Stack (Railway / Render)
 - Deploy server to Railway/Render with MongoDB Atlas
-- Set `VITE_API_URL` to your deployed server URL
-- Deploy client to Vercel
+- Deploy client to Vercel and set the primary domain to `https://getcvcraft.com`
+- Set `VITE_API_URL` to your deployed server URL in the client environment only if your backend is hosted separately
+- Set `CLIENT_URL` to your frontend domain in the server environment
 
 ### Environment Variables for Production
 ```bash
 # Server
 MONGO_URI=mongodb+srv://...
-CLIENT_URL=https://your-domain.vercel.app
+CLIENT_URL=https://getcvcraft.com
 PORT=5000
 
 # Client
 VITE_API_URL=https://your-server.railway.app/api
 ```
+
+### Domain setup checklist
+- Add `getcvcraft.com` as the primary Vercel custom domain for the frontend
+- (Optional) Add `www.getcvcraft.com` as an alias for the same Vercel project so Vercel can provision SSL for `www`
+- In the Vercel dashboard: go to the Project → Domains → Add Domain → enter `www.getcvcraft.com` → select the existing project and confirm. Wait for the SSL certificate to be issued (status will change to "Verified").
+- Once `www` is added, the redirect in `vercel.json` will route all `www.getcvcraft.com/*` requests to `https://getcvcraft.com/*`.
+- Set `CLIENT_URL` in the backend environment to `https://getcvcraft.com`
+- Only set `VITE_API_URL` in the frontend if the API is hosted on a separate domain; otherwise the client will call `/api` relative to the current origin.
+- Quick test (after alias is added and SSL issued):
+	- `curl -I https://getcvcraft.com/api/health`
+	- `curl -I https://www.getcvcraft.com/api/health` (should return a 301/200 after alias + redirect)
 
 ---
 
