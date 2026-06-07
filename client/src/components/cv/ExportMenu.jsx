@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { X, FileDown, FileJson, Printer, Loader2, BadgeDollarSign, Clapperboard, ShieldCheck, RefreshCw } from 'lucide-react'
 import { exportCVasPDF } from '../../utils/exportPDF.js'
 import { downloadJSON } from '../../utils/io.js'
@@ -10,10 +10,30 @@ export default function ExportMenu({ cv, onClose }) {
   const [error, setError] = useState('')
   const [adOpen, setAdOpen] = useState(false)
   const [adSeconds, setAdSeconds] = useState(0)
+  const [adAvailable, setAdAvailable] = useState(false)
+  const [adConfigCountdown, setAdConfigCountdown] = useState(60)
   const sessionId = useStore(s => s.sessionId)
   const { updateCVPayment, markCVDownloaded, unlockCVAccess } = useStore()
 
   const downloadUnlocked = cv.monetization?.downloadUnlocked
+
+  useEffect(() => {
+    setAdAvailable(Boolean(window?.CVCraftRewardedAdAvailable))
+  }, [])
+
+  useEffect(() => {
+    if (adAvailable) return
+    let remaining = 60
+    setAdConfigCountdown(remaining)
+    const timer = window.setInterval(() => {
+      remaining -= 1
+      setAdConfigCountdown(remaining)
+      if (remaining <= 0) {
+        window.clearInterval(timer)
+      }
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [adAvailable])
 
   const refreshEntitlement = async () => {
     setLoading('refresh')
@@ -55,6 +75,11 @@ export default function ExportMenu({ cv, onClose }) {
   }
 
   const startRewardedAd = async () => {
+    if (!adAvailable) {
+      setError('Rewarded ads are not available yet. Please use Paystack or Flutterwave.')
+      return
+    }
+
     setError('')
     setAdOpen(true)
 
@@ -71,17 +96,8 @@ export default function ExportMenu({ cv, onClose }) {
       return
     }
 
-    setAdSeconds(60)
-    let remaining = 60
-    const timer = window.setInterval(async () => {
-      remaining -= 1
-      setAdSeconds(remaining)
-      if (remaining <= 0) {
-        window.clearInterval(timer)
-        await completeAdUnlock()
-        setAdOpen(false)
-      }
-    }, 1000)
+    setError('Rewarded ads are not available yet. Please use Paystack or Flutterwave.')
+    setAdOpen(false)
   }
 
   const completeAdUnlock = async () => {
@@ -161,13 +177,18 @@ export default function ExportMenu({ cv, onClose }) {
               </button>
               <button
                 onClick={startRewardedAd}
-                disabled={loading === 'ad'}
+                disabled={loading === 'ad' || !adAvailable}
                 className="btn-secondary col-span-2 justify-center py-2 text-xs"
               >
                 {loading === 'ad' ? <Loader2 size={14} className="animate-spin" /> : <Clapperboard size={14} />}
-                Watch Ad
+                {adAvailable ? 'Watch Ad' : 'Watch Ad (coming soon)'}
               </button>
             </div>
+            <p className="mt-2 text-[11px] text-obsidian-400">
+              {adAvailable
+                ? 'Rewarded ad unlocks are enabled.'
+                : `Rewarded ads are not configured yet.${adConfigCountdown > 0 ? ` Available in ${adConfigCountdown}s.` : ' Coming soon.'}`}
+            </p>
             <button
               onClick={refreshEntitlement}
               disabled={loading === 'refresh'}

@@ -20,11 +20,12 @@ async function fallbackWait60() {
 
 export function initRewardedAd() {
   const adTag = (import.meta.env && import.meta.env.VITE_GAM_REWARDED_TAG) || window.CVCraftAdTagUrl
+  const adEnabled = Boolean(adTag)
+  window.CVCraftRewardedAdAvailable = adEnabled
   window.CVCraftRewardedAd = window.CVCraftRewardedAd || {
     show: async () => {
-      if (!adTag) {
-        // No tag configured — fallback to 60s wait
-        return await fallbackWait60()
+      if (!adEnabled) {
+        throw new Error('Rewarded ads are not configured yet.')
       }
 
       // Try to load IMA SDK
