@@ -1,13 +1,15 @@
 const crypto = require('crypto')
 const { connectDB } = require('./_lib/mongoose')
 const Entitlement = require('./_lib/models/Entitlement')
+const PaymentAttempt = require('./_lib/models/PaymentAttempt')
 
 const PRICE_CENTS = Number(process.env.PAYMENT_PRICE_CENTS || process.env.LEMON_SQUEEZY_PRICE_CENTS || 250)
 const PRICE_AMOUNT = Number((PRICE_CENTS / 100).toFixed(2))
-const DEFAULT_CURRENCY = process.env.PAYMENT_CURRENCY || process.env.LEMON_SQUEEZY_CURRENCY || 'USD'
+const DEFAULT_CURRENCY = String(process.env.PAYMENT_CURRENCY || process.env.LEMON_SQUEEZY_CURRENCY || 'USD').toUpperCase()
+const CHECKOUT_TTL_MINUTES = Number(process.env.PAYMENT_CHECKOUT_TTL_MINUTES || 30)
 const ENABLED_PROVIDERS = String(process.env.PAYMENT_PROVIDERS || 'paystack,flutterwave')
   .split(',')
-  .map(provider => provider.trim().toLowerCase())
+  .map(provider => normalizeProvider(provider))
   .filter(Boolean)
 
 async function handler(req, res) {
@@ -19,7 +21,8 @@ async function handler(req, res) {
       const { sessionId, cvId } = req.query
       if (!sessionId || !cvId) return res.status(400).json({ error: 'sessionId and cvId are required' })
 
-      await verifyReturnedPayment(req.query)
+      await verifyReturnedPayment(req.query, { sessionId, cvId })
+      await verifyPendingAttempts({ sessionId, cvId })
 
       const entitlements = await Entitlement.find({ sessionId, cvId, active: true }).sort({ createdAt: -1 }).lean()
       return res.status(200).json({
@@ -30,45 +33,56 @@ async function handler(req, res) {
     }
 
     if (req.method === 'POST' && action === 'checkout') {
+      await connectDB()
       const body = await readJson(req)
       const { sessionId, cvId, cvTitle, unlockType = 'download', redirectUrl, provider = 'paystack', customerEmail } = body || {}
       if (!sessionId || !cvId) return res.status(400).json({ error: 'sessionId and cvId are required' })
 
       const normalizedProvider = normalizeProvider(provider)
+      const normalizedUnlockType = normalizeUnlockType(unlockType)
       assertProviderEnabled(normalizedProvider)
 
-      const checkoutUrl = await createCheckout({
+      if (await hasActiveEntitlement(sessionId, cvId, normalizedUnlockType)) {
+        return res.status(200).json({
+          alreadyUnlocked: true,
+          provider: normalizedProvider,
+          checkoutUrl: safeReturnUrl(redirectUrl, getOrigin(req), cvId),
+        })
+      }
+
+      const reusableAttempt = await findReusableAttempt({ sessionId, cvId, unlockType: normalizedUnlockType })
+      if (reusableAttempt?.checkoutUrl) {
+        return res.status(200).json({ checkoutUrl: reusableAttempt.checkoutUrl, provider: reusableAttempt.provider, reference: reusableAttempt.reference })
+      }
+
+      const checkout = await createCheckout({
         provider: normalizedProvider,
         sessionId,
         cvId,
         cvTitle,
-        unlockType,
+        unlockType: normalizedUnlockType,
         redirectUrl,
         customerEmail,
         origin: getOrigin(req),
       })
 
-      return res.status(200).json({ checkoutUrl, provider: normalizedProvider })
+      return res.status(200).json(checkout)
     }
 
     if (req.method === 'POST' && action === 'ad-unlock') {
-      await connectDB()
-      const body = await readJson(req)
-      const { sessionId, cvId, unlockType = 'download' } = body || {}
-      if (!sessionId || !cvId) return res.status(400).json({ error: 'sessionId and cvId are required' })
+      if (process.env.REWARDED_AD_UNLOCKS_ENABLED !== 'true') {
+        const err = new Error('Rewarded ad unlocks are disabled until a server-verifiable ad provider is configured')
+        err.statusCode = 501
+        throw err
+      }
 
-      await upsertEntitlement({
-        sessionId,
-        cvId,
-        type: normalizeUnlockType(unlockType),
-        source: 'rewarded_ad',
-        metadata: { awardedAt: new Date().toISOString() },
-      })
-
-      return res.status(200).json({ ok: true })
+      const err = new Error('Rewarded ad unlocks need server-side reward verification before access can be granted')
+      err.statusCode = 501
+      throw err
     }
 
     if (req.method === 'POST' && action === 'webhook') {
+      await connectDB()
       const rawBody = await readRawBody(req)
       const provider = normalizeProvider(req.query.provider || req.headers['x-cvcraft-provider'] || detectWebhookProvider(req))
       assertProviderEnabled(provider)
@@ -114,7 +128,16 @@ async function createPaystackCheckout({ sessionId, cvId, cvTitle, unlockType, re
     throw err
   }
 
-  const url = addPaymentParams(redirectUrl || `${origin}/cv/${encodeURIComponent(cvId)}`, 'paystack')
+  const reference = createReference('ps')
+  const attempt = await createPaymentAttempt({
+    provider: 'paystack',
+    reference,
+    sessionId,
+    cvId,
+    unlockType,
+    customerEmail,
+  })
+
   const response = await fetch('https://api.paystack.co/transaction/initialize', {
     method: 'POST',
     headers: {
@@ -125,19 +148,27 @@ async function createPaystackCheckout({ sessionId, cvId, cvTitle, unlockType, re
       email: normalizeEmail(customerEmail, sessionId),
       amount: PRICE_CENTS,
       currency: DEFAULT_CURRENCY,
-      callback_url: url,
+      reference,
+      callback_url: addPaymentParams(safeReturnUrl(redirectUrl, origin, cvId), 'paystack'),
       metadata: {
+        attemptId: String(attempt._id),
+        reference,
         sessionId,
         cvId,
-        unlockType: normalizeUnlockType(unlockType),
+        unlockType,
         cvTitle: cvTitle || 'Untitled CV',
       },
     }),
   })
 
   const json = await response.json()
-  if (!response.ok || !json.status) throwProviderError(json, response.status, 'Unable to create Paystack checkout')
-  return json?.data?.authorization_url
+  if (!response.ok || !json.status || !json?.data?.authorization_url) {
+    await markAttemptFailed(reference, json)
+    throwProviderError(json, response.status, 'Unable to create Paystack checkout')
+  }
+
+  await PaymentAttempt.updateOne({ reference }, { $set: { checkoutUrl: json.data.authorization_url, metadata: { initialize: json.data } } })
+  return { checkoutUrl: json.data.authorization_url, provider: 'paystack', reference }
 }
 
 async function createFlutterwaveCheckout({ sessionId, cvId, cvTitle, unlockType, redirectUrl, customerEmail, origin }) {
@@ -148,8 +179,16 @@ async function createFlutterwaveCheckout({ sessionId, cvId, cvTitle, unlockType,
     throw err
   }
 
-  const txRef = `cvcraft-${cvId}-${Date.now()}`
-  const url = addPaymentParams(redirectUrl || `${origin}/cv/${encodeURIComponent(cvId)}`, 'flutterwave')
+  const reference = createReference('flw')
+  await createPaymentAttempt({
+    provider: 'flutterwave',
+    reference,
+    sessionId,
+    cvId,
+    unlockType,
+    customerEmail,
+  })
+
   const response = await fetch('https://api.flutterwave.com/v3/payments', {
     method: 'POST',
     headers: {
@@ -157,29 +196,35 @@ async function createFlutterwaveCheckout({ sessionId, cvId, cvTitle, unlockType,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      tx_ref: txRef,
+      tx_ref: reference,
       amount: PRICE_AMOUNT,
       currency: DEFAULT_CURRENCY,
-      redirect_url: url,
+      redirect_url: addPaymentParams(safeReturnUrl(redirectUrl, origin, cvId), 'flutterwave'),
       customer: {
         email: normalizeEmail(customerEmail, sessionId),
         name: 'CVCraft Customer',
       },
       customizations: {
-        title: normalizeUnlockType(unlockType) === 'edit' ? 'CV Edit Unlock' : 'CV Download',
-        description: `${normalizeUnlockType(unlockType) === 'edit' ? 'Edit' : 'Download'} ${cvTitle || 'your CV'} in any available format.`,
+        title: unlockType === 'edit' ? 'CV Edit Unlock' : 'CV Download',
+        description: `${unlockType === 'edit' ? 'Edit' : 'Download'} ${cvTitle || 'your CV'} in any available format.`,
       },
       meta: {
+        reference,
         sessionId,
         cvId,
-        unlockType: normalizeUnlockType(unlockType),
+        unlockType,
       },
     }),
   })
 
   const json = await response.json()
-  if (!response.ok || json.status !== 'success') throwProviderError(json, response.status, 'Unable to create Flutterwave checkout')
-  return json?.data?.link
+  if (!response.ok || json.status !== 'success' || !json?.data?.link) {
+    await markAttemptFailed(reference, json)
+    throwProviderError(json, response.status, 'Unable to create Flutterwave checkout')
+  }
+
+  await PaymentAttempt.updateOne({ reference }, { $set: { checkoutUrl: json.data.link, metadata: { initialize: json.data } } })
+  return { checkoutUrl: json.data.link, provider: 'flutterwave', reference }
 }
 
 async function createLemonCheckout({ sessionId, cvId, cvTitle, unlockType, redirectUrl, origin }) {
@@ -193,7 +238,9 @@ async function createLemonCheckout({ sessionId, cvId, cvTitle, unlockType, redir
     throw err
   }
 
-  const url = addPaymentParams(redirectUrl || `${origin}/cv/${encodeURIComponent(cvId)}`, 'lemon_squeezy')
+  const reference = createReference('ls')
+  await createPaymentAttempt({ provider: 'lemon_squeezy', reference, sessionId, cvId, unlockType })
+
   const response = await fetch('https://api.lemonsqueezy.com/v1/checkouts', {
     method: 'POST',
     headers: {
@@ -206,16 +253,12 @@ async function createLemonCheckout({ sessionId, cvId, cvTitle, unlockType, redir
         type: 'checkouts',
         attributes: {
           checkout_data: {
-            custom: {
-              sessionId,
-              cvId,
-              unlockType: normalizeUnlockType(unlockType),
-            },
+            custom: { reference, sessionId, cvId, unlockType },
           },
           product_options: {
-            name: normalizeUnlockType(unlockType) === 'edit' ? 'CV Edit Unlock' : 'CV Download',
-            description: `${normalizeUnlockType(unlockType) === 'edit' ? 'Edit' : 'Download'} ${cvTitle || 'your CV'} in any available format.`,
-            redirect_url: url,
+            name: unlockType === 'edit' ? 'CV Edit Unlock' : 'CV Download',
+            description: `${unlockType === 'edit' ? 'Edit' : 'Download'} ${cvTitle || 'your CV'} in any available format.`,
+            redirect_url: addPaymentParams(safeReturnUrl(redirectUrl, origin, cvId), 'lemon_squeezy'),
           },
         },
         relationships: {
@@ -227,48 +270,60 @@ async function createLemonCheckout({ sessionId, cvId, cvTitle, unlockType, redir
   })
 
   const json = await response.json()
-  if (!response.ok) {
+  if (!response.ok || !json?.data?.attributes?.url) {
+    await markAttemptFailed(reference, json)
     const message = json?.errors?.[0]?.detail || json?.errors?.[0]?.title || 'Unable to create Lemon Squeezy checkout'
     const err = new Error(message)
     err.statusCode = response.status
     throw err
   }
 
-  return json?.data?.attributes?.url
+  const checkoutUrl = json.data.attributes.url
+  await PaymentAttempt.updateOne({ reference }, { $set: { checkoutUrl, metadata: { initialize: json.data } } })
+  return { checkoutUrl, provider: 'lemon_squeezy', reference }
 }
 
-async function verifyReturnedPayment(query) {
+async function verifyReturnedPayment(query, expected) {
   const provider = normalizeProvider(query.provider || query.paymentProvider || '')
   if (!provider) return
 
   if (provider === 'paystack' && query.reference) {
-    const payment = await verifyPaystackReference(query.reference)
-    if (payment?.status === 'success') await awardPaymentEntitlements(fromPaystackPayment(payment))
+    await verifyAndAwardPaystack(query.reference, expected)
   }
 
   if (provider === 'flutterwave' && (query.transaction_id || query.tx_ref)) {
-    const payment = query.transaction_id
-      ? await verifyFlutterwaveTransaction(query.transaction_id)
-      : await verifyFlutterwaveTxRef(query.tx_ref)
-    if (payment?.status === 'successful') await awardPaymentEntitlements(fromFlutterwavePayment(payment))
+    await verifyAndAwardFlutterwave({ transactionId: query.transaction_id, reference: query.tx_ref }, expected)
+  }
+}
+
+async function verifyPendingAttempts({ sessionId, cvId }) {
+  const attempts = await PaymentAttempt.find({
+    sessionId,
+    cvId,
+    status: 'pending',
+    expiresAt: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+  }).sort({ createdAt: -1 }).limit(5).lean()
+
+  for (const attempt of attempts) {
+    if (attempt.provider === 'paystack') await verifyAndAwardPaystack(attempt.reference, { sessionId, cvId })
+    if (attempt.provider === 'flutterwave') await verifyAndAwardFlutterwave({ reference: attempt.reference }, { sessionId, cvId })
   }
 }
 
 async function handlePaystackWebhook(req, rawBody) {
   verifyPaystackWebhook(req, rawBody)
   const payload = JSON.parse(rawBody.toString('utf8'))
-  if (payload?.event !== 'charge.success') return
-  await connectDB()
-  await awardPaymentEntitlements(fromPaystackPayment(payload.data))
+  if (!['charge.success', 'transaction.success'].includes(payload?.event)) return
+  const reference = payload?.data?.reference
+  if (reference) await verifyAndAwardPaystack(reference)
 }
 
 async function handleFlutterwaveWebhook(req, rawBody) {
-  verifyFlutterwaveWebhook(req)
+  verifyFlutterwaveWebhook(req, rawBody)
   const payload = JSON.parse(rawBody.toString('utf8'))
   const data = payload?.data || payload
   if (!['successful', 'completed'].includes(data?.status)) return
-  await connectDB()
-  await awardPaymentEntitlements(fromFlutterwavePayment(data))
+  await verifyAndAwardFlutterwave({ transactionId: data?.id || data?.transaction_id, reference: data?.tx_ref })
 }
 
 async function handleLemonWebhook(req, rawBody) {
@@ -278,29 +333,115 @@ async function handleLemonWebhook(req, rawBody) {
   if (!['order_created', 'subscription_payment_success'].includes(event)) return
 
   const custom = payload?.meta?.custom_data || payload?.data?.attributes?.custom_data || {}
-  await connectDB()
-  await awardPaymentEntitlements({
+  const reference = custom.reference
+  const attempt = reference ? await PaymentAttempt.findOne({ reference }) : null
+  if (!attempt) return
+
+  await finalizeVerifiedPayment(attempt, {
     provider: 'lemon_squeezy',
-    sessionId: custom.sessionId,
-    cvId: custom.cvId,
-    unlockType: custom.unlockType,
-    orderId: String(payload?.data?.id || ''),
-    checkoutId: String(payload?.data?.attributes?.checkout_id || ''),
+    reference,
+    status: 'success',
+    sessionId: attempt.sessionId,
+    cvId: attempt.cvId,
+    unlockType: attempt.unlockType,
+    orderId: String(payload?.data?.id || reference),
+    checkoutId: String(payload?.data?.attributes?.checkout_id || reference),
     customerEmail: payload?.data?.attributes?.user_email || payload?.data?.attributes?.customer_email || null,
-    amount: payload?.data?.attributes?.total || PRICE_CENTS,
-    currency: payload?.data?.attributes?.currency || DEFAULT_CURRENCY,
+    amount: payload?.data?.attributes?.total || attempt.amount,
+    currency: payload?.data?.attributes?.currency || attempt.currency,
     metadata: payload?.data?.attributes || {},
   })
 }
 
-async function awardPaymentEntitlements(payment) {
-  if (!payment?.sessionId || !payment?.cvId) return
-  const unlockType = normalizeUnlockType(payment.unlockType)
+async function verifyAndAwardPaystack(reference, expected) {
+  const payment = await verifyPaystackReference(reference)
+  if (!payment) return null
+  return finalizeVerifiedPaymentByReference('paystack', reference, fromPaystackPayment(payment), expected)
+}
 
+async function verifyAndAwardFlutterwave({ transactionId, reference }, expected) {
+  const payment = transactionId
+    ? await verifyFlutterwaveTransaction(transactionId)
+    : await verifyFlutterwaveTxRef(reference)
+  if (!payment) return null
+  return finalizeVerifiedPaymentByReference('flutterwave', payment.tx_ref || reference, fromFlutterwavePayment(payment), expected)
+}
+
+async function finalizeVerifiedPaymentByReference(provider, reference, payment, expected) {
+  if (!reference) return null
+
+  const attempt = await PaymentAttempt.findOne({ provider, reference })
+  if (!attempt) return null
+  if (attempt.status === 'success') return attempt
+  if (attempt.status !== 'pending') return null
+
+  if (expected && (attempt.sessionId !== expected.sessionId || attempt.cvId !== expected.cvId)) {
+    return null
+  }
+
+  return finalizeVerifiedPayment(attempt, payment)
+}
+
+async function finalizeVerifiedPayment(attempt, payment) {
+  const validationError = validatePaymentAgainstAttempt(attempt, payment)
+  if (validationError) {
+    await PaymentAttempt.updateOne(
+      { _id: attempt._id, status: 'pending' },
+      { $set: { status: 'failed', verifiedAt: new Date(), metadata: { ...(attempt.metadata || {}), validationError, payment: payment.metadata } } }
+    )
+    return null
+  }
+
+  const updatedAttempt = await PaymentAttempt.findOneAndUpdate(
+    { _id: attempt._id, status: 'pending' },
+    {
+      $set: {
+        status: 'success',
+        providerTransactionId: payment.checkoutId,
+        customerEmail: payment.customerEmail || attempt.customerEmail,
+        verifiedAt: new Date(),
+        metadata: { ...(attempt.metadata || {}), verifiedPayment: payment.metadata },
+      },
+    },
+    { new: true }
+  )
+
+  if (!updatedAttempt && attempt.status !== 'success') return null
+
+  await awardPaymentEntitlements({
+    provider: attempt.provider,
+    sessionId: attempt.sessionId,
+    cvId: attempt.cvId,
+    unlockType: attempt.unlockType,
+    orderId: payment.orderId || attempt.reference,
+    checkoutId: payment.checkoutId || attempt.reference,
+    customerEmail: payment.customerEmail || attempt.customerEmail,
+    amount: attempt.amount,
+    currency: attempt.currency,
+    metadata: payment.metadata || {},
+  })
+
+  return updatedAttempt || attempt
+}
+
+function validatePaymentAgainstAttempt(attempt, payment) {
+  if (!['success', 'successful'].includes(payment.status)) return 'payment_not_successful'
+  if (payment.provider !== attempt.provider) return 'provider_mismatch'
+  if (payment.reference && payment.reference !== attempt.reference) return 'reference_mismatch'
+  if (payment.sessionId && payment.sessionId !== attempt.sessionId) return 'session_mismatch'
+  if (payment.cvId && payment.cvId !== attempt.cvId) return 'cv_mismatch'
+  if (normalizeUnlockType(payment.unlockType) !== attempt.unlockType) return 'unlock_type_mismatch'
+  if (Number(payment.amount) !== Number(attempt.amount)) return 'amount_mismatch'
+  if (String(payment.currency || '').toUpperCase() !== attempt.currency) return 'currency_mismatch'
+  if (attempt.expiresAt < new Date()) return 'checkout_expired'
+  return ''
+}
+
+async function awardPaymentEntitlements(payment) {
   await upsertEntitlement({
     sessionId: payment.sessionId,
     cvId: payment.cvId,
-    type: unlockType,
+    type: payment.unlockType,
     source: payment.provider,
     orderId: payment.orderId,
     checkoutId: payment.checkoutId,
@@ -310,13 +451,13 @@ async function awardPaymentEntitlements(payment) {
     metadata: payment.metadata,
   })
 
-  if (unlockType === 'edit') return
+  if (payment.unlockType === 'edit') return
   await upsertEntitlement({
     sessionId: payment.sessionId,
     cvId: payment.cvId,
     type: 'edit',
     source: payment.provider,
-    orderId: `${payment.orderId || payment.checkoutId || payment.cvId}:edit`,
+    orderId: `${payment.orderId || payment.checkoutId}:edit`,
     checkoutId: payment.checkoutId,
     customerEmail: payment.customerEmail,
     amount: payment.amount,
@@ -329,14 +470,15 @@ function fromPaystackPayment(data) {
   const metadata = data?.metadata || {}
   return {
     provider: 'paystack',
+    reference: String(data?.reference || ''),
     sessionId: metadata.sessionId,
     cvId: metadata.cvId,
     unlockType: metadata.unlockType,
     orderId: String(data?.reference || ''),
     checkoutId: String(data?.id || data?.reference || ''),
     customerEmail: data?.customer?.email || null,
-    amount: data?.amount || PRICE_CENTS,
-    currency: data?.currency || DEFAULT_CURRENCY,
+    amount: Number(data?.amount || 0),
+    currency: String(data?.currency || '').toUpperCase(),
     metadata: data || {},
     status: data?.status,
   }
@@ -346,17 +488,55 @@ function fromFlutterwavePayment(data) {
   const metadata = data?.meta || data?.metadata || {}
   return {
     provider: 'flutterwave',
+    reference: String(data?.tx_ref || ''),
     sessionId: metadata.sessionId,
     cvId: metadata.cvId,
     unlockType: metadata.unlockType,
     orderId: String(data?.tx_ref || data?.flw_ref || ''),
     checkoutId: String(data?.id || data?.transaction_id || ''),
     customerEmail: data?.customer?.email || null,
-    amount: Math.round(Number(data?.amount || PRICE_AMOUNT) * 100),
-    currency: data?.currency || DEFAULT_CURRENCY,
+    amount: Math.round(Number(data?.amount || 0) * 100),
+    currency: String(data?.currency || '').toUpperCase(),
     metadata: data || {},
     status: data?.status,
   }
+}
+
+async function createPaymentAttempt({ provider, reference, sessionId, cvId, unlockType, customerEmail }) {
+  return PaymentAttempt.create({
+    provider,
+    reference,
+    sessionId,
+    cvId,
+    unlockType,
+    amount: PRICE_CENTS,
+    currency: DEFAULT_CURRENCY,
+    customerEmail: customerEmail || null,
+    expiresAt: new Date(Date.now() + CHECKOUT_TTL_MINUTES * 60 * 1000),
+  })
+}
+
+async function findReusableAttempt({ sessionId, cvId, unlockType }) {
+  return PaymentAttempt.findOne({
+    sessionId,
+    cvId,
+    unlockType,
+    status: 'pending',
+    checkoutUrl: { $ne: null },
+    expiresAt: { $gt: new Date() },
+  }).sort({ createdAt: -1 }).lean()
+}
+
+async function hasActiveEntitlement(sessionId, cvId, unlockType) {
+  const types = unlockType === 'download' ? ['download'] : ['edit']
+  return Entitlement.exists({ sessionId, cvId, type: { $in: types }, active: true })
+}
+
+async function markAttemptFailed(reference, providerResponse) {
+  return PaymentAttempt.updateOne(
+    { reference, status: 'pending' },
+    { $set: { status: 'failed', verifiedAt: new Date(), metadata: { providerResponse } } }
+  )
 }
 
 async function verifyPaystackReference(reference) {
@@ -373,7 +553,7 @@ async function verifyPaystackReference(reference) {
 
 async function verifyFlutterwaveTransaction(transactionId) {
   const secretKey = process.env.FLUTTERWAVE_SECRET_KEY
-  if (!secretKey) return null
+  if (!secretKey || !transactionId) return null
 
   const response = await fetch(`https://api.flutterwave.com/v3/transactions/${encodeURIComponent(transactionId)}/verify`, {
     headers: { Authorization: `Bearer ${secretKey}` },
@@ -383,11 +563,11 @@ async function verifyFlutterwaveTransaction(transactionId) {
   return json.data
 }
 
-async function verifyFlutterwaveTxRef(txRef) {
+async function verifyFlutterwaveTxRef(reference) {
   const secretKey = process.env.FLUTTERWAVE_SECRET_KEY
-  if (!secretKey) return null
+  if (!secretKey || !reference) return null
 
-  const response = await fetch(`https://api.flutterwave.com/v3/transactions/verify_by_reference?tx_ref=${encodeURIComponent(txRef)}`, {
+  const response = await fetch(`https://api.flutterwave.com/v3/transactions/verify_by_reference?tx_ref=${encodeURIComponent(reference)}`, {
     headers: { Authorization: `Bearer ${secretKey}` },
   })
   const json = await response.json()
@@ -408,12 +588,15 @@ function verifyPaystackWebhook(req, rawBody) {
   }
 }
 
-function verifyFlutterwaveWebhook(req) {
+function verifyFlutterwaveWebhook(req, rawBody) {
   const secretHash = process.env.FLUTTERWAVE_WEBHOOK_SECRET_HASH
   if (!secretHash) return
 
-  const signature = req.headers['verif-hash']
-  if (!safeCompare(signature, secretHash)) {
+  const legacySignature = req.headers['verif-hash']
+  const hmacSignature = req.headers['flutterwave-signature']
+  const hmacDigest = crypto.createHmac('sha256', secretHash).update(rawBody).digest('hex')
+
+  if (!safeCompare(legacySignature, secretHash) && !safeCompare(hmacSignature, hmacDigest)) {
     const err = new Error('Invalid Flutterwave webhook signature')
     err.statusCode = 401
     throw err
@@ -448,6 +631,26 @@ function addPaymentParams(url, provider) {
   return paymentUrl.toString()
 }
 
+function safeReturnUrl(url, origin, cvId) {
+  const fallback = `${origin}/cv/${encodeURIComponent(cvId)}`
+  if (!url) return fallback
+
+  try {
+    const parsed = new URL(url, origin)
+    const allowedOrigins = new Set([origin])
+    String(process.env.PAYMENT_ALLOWED_REDIRECT_ORIGINS || '')
+      .split(',')
+      .map(value => value.trim())
+      .filter(Boolean)
+      .forEach(value => allowedOrigins.add(value))
+
+    if (!allowedOrigins.has(parsed.origin)) return fallback
+    return parsed.toString()
+  } catch {
+    return fallback
+  }
+}
+
 function assertProviderEnabled(provider) {
   if (ENABLED_PROVIDERS.includes(provider)) return
   const err = new Error(`${provider || 'This payment provider'} is not enabled`)
@@ -471,9 +674,13 @@ function normalizeEmail(email, sessionId) {
   return `customer-${String(sessionId).replace(/[^a-z0-9]/gi, '').slice(0, 32)}@cvcraft.local`
 }
 
+function createReference(prefix) {
+  return `${prefix}_${Date.now()}_${crypto.randomBytes(12).toString('hex')}`
+}
+
 function detectWebhookProvider(req) {
   if (req.headers['x-paystack-signature']) return 'paystack'
-  if (req.headers['verif-hash']) return 'flutterwave'
+  if (req.headers['verif-hash'] || req.headers['flutterwave-signature']) return 'flutterwave'
   if (req.headers['x-signature']) return 'lemon_squeezy'
   return ''
 }

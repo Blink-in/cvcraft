@@ -6,13 +6,5 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "redirects": [
-    {
-      "source": "/(.*)",
-      "has": [ { "type": "host", "value": "www.getcvcraft.com" } ],
-      "destination": "https://getcvcraft.com/$1",
-      "permanent": true
-    }
   ]
 }

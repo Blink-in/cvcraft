@@ -178,6 +178,11 @@
 
   /* ── Print ── */
   @media print {
+    #cv-preview-root[data-protected-preview="true"],
+    #cv-preview-root[data-protected-preview="true"] * {
+      visibility: hidden !important;
+    }
+
     body > *:not(#cv-print-target) { display: none !important; }
     #cv-print-target { display: block !important; }
   }

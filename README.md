@@ -195,7 +195,8 @@ VITE_API_URL=https://your-server.railway.app/api
 - Add `getcvcraft.com` as the primary Vercel custom domain for the frontend
 - (Optional) Add `www.getcvcraft.com` as an alias for the same Vercel project so Vercel can provision SSL for `www`
 - In the Vercel dashboard: go to the Project → Domains → Add Domain → enter `www.getcvcraft.com` → select the existing project and confirm. Wait for the SSL certificate to be issued (status will change to "Verified").
-- Once `www` is added, the redirect in `vercel.json` will route all `www.getcvcraft.com/*` requests to `https://getcvcraft.com/*`.
+- Make `getcvcraft.com` the primary domain and `www.getcvcraft.com` an alias. Do not set both as primary domains in separate projects.
+- Keep any DNS or page-rule redirects from `getcvcraft.com` → `www.getcvcraft.com` disabled; Vercel will handle `www` → `getcvcraft.com` via `vercel.json`.
 - Set `CLIENT_URL` in the backend environment to `https://getcvcraft.com`
 - Only set `VITE_API_URL` in the frontend if the API is hosted on a separate domain; otherwise the client will call `/api` relative to the current origin.
 - Quick test (after alias is added and SSL issued):

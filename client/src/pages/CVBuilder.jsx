@@ -34,6 +34,24 @@ export default function CVBuilder() {
   }, [id])
 
   useEffect(() => {
+    if (!cv || cv.monetization?.downloadUnlocked) return
+
+    const blockUnpaidCaptureShortcuts = (event) => {
+      const key = event.key.toLowerCase()
+      const shortcutBlocked = (event.ctrlKey || event.metaKey) && ['p', 's'].includes(key)
+      const printScreenBlocked = event.key === 'PrintScreen'
+
+      if (!shortcutBlocked && !printScreenBlocked) return
+      event.preventDefault()
+      event.stopPropagation()
+      setUnlockError('Unlock this CV before printing, saving, or capturing a clean copy.')
+    }
+
+    window.addEventListener('keydown', blockUnpaidCaptureShortcuts, true)
+    return () => window.removeEventListener('keydown', blockUnpaidCaptureShortcuts, true)
+  }, [cv?.id, cv?.monetization?.downloadUnlocked])
+
+  useEffect(() => {
     if (!cv || searchParams.get('payment') !== 'success') return
 
     let alive = true
@@ -96,16 +114,12 @@ export default function CVBuilder() {
         const watched = await window.CVCraftRewardedAd.show()
         if (!watched) throw new Error('Please finish the ad to unlock editing.')
       } else {
-        await new Promise(resolve => setTimeout(resolve, 15000))
+        await new Promise(resolve => setTimeout(resolve, 60000))
       }
-      try {
-        await paymentAPI.recordAdUnlock({ sessionId, cvId: cv.id, unlockType: 'edit' })
-      } catch {
-        // Local fallback: keep the app usable without a configured ad endpoint.
-      }
+      await paymentAPI.recordAdUnlock({ sessionId, cvId: cv.id, unlockType: 'edit' })
       unlockCVAccess(cv.id, 'rewarded_ad', 'edit')
     } catch (err) {
-      setUnlockError(err.message || 'The ad provider was not available.')
+      setUnlockError(err.response?.data?.error || err.message || 'The ad provider was not available.')
     } finally {
       setUnlocking(null)
     }

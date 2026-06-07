@@ -71,8 +71,8 @@ export default function ExportMenu({ cv, onClose }) {
       return
     }
 
-    setAdSeconds(15)
-    let remaining = 15
+    setAdSeconds(60)
+    let remaining = 60
     const timer = window.setInterval(async () => {
       remaining -= 1
       setAdSeconds(remaining)
@@ -88,11 +88,12 @@ export default function ExportMenu({ cv, onClose }) {
     setLoading('ad')
     try {
       await paymentAPI.recordAdUnlock({ sessionId, cvId: cv.id, unlockType: 'download' })
+      unlockCVAccess(cv.id, 'rewarded_ad', 'download')
     } catch {
-      // Local unlock still lets the rewarded-ad flow work during local development.
+      setError('Rewarded ads are not available yet. Please use Paystack or Flutterwave.')
+    } finally {
+      setLoading(null)
     }
-    unlockCVAccess(cv.id, 'rewarded_ad', 'download')
-    setLoading(null)
   }
 
   const handlePDF = async () => {
@@ -243,7 +244,7 @@ export default function ExportMenu({ cv, onClose }) {
               Keep this window open until the ad finishes. Your CV unlocks automatically.
             </p>
             <div className="mt-4 h-2 overflow-hidden rounded-full bg-obsidian-800">
-              <div className="h-full bg-amber-400 transition-all" style={{ width: `${((15 - adSeconds) / 15) * 100}%` }} />
+              <div className="h-full bg-amber-400 transition-all" style={{ width: `${((60 - adSeconds) / 60) * 100}%` }} />
             </div>
             <p className="mt-3 text-xs text-obsidian-500">{adSeconds}s remaining</p>
           </div>

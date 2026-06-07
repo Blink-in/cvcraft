@@ -27,6 +27,6 @@ const entitlementSchema = new mongoose.Schema(
 )
 
 entitlementSchema.index({ sessionId: 1, cvId: 1, type: 1, active: 1 })
-entitlementSchema.index({ orderId: 1 }, { sparse: true })
+entitlementSchema.index({ orderId: 1, cvId: 1, type: 1 }, { unique: true, sparse: true })
 
 module.exports = mongoose.models.Entitlement || mongoose.model('Entitlement', entitlementSchema)
