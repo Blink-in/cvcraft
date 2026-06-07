@@ -55,6 +55,11 @@ export default function ExportMenu({ cv, onClose }) {
   }
 
   const startCheckout = async (provider, unlockType = 'download') => {
+    if (!sessionId || !cv?.id) {
+      setError('Missing session or CV identifier. Reload the page and try again.')
+      return
+    }
+
     setLoading(`pay-${provider}-${unlockType}`)
     setError('')
     try {
@@ -101,6 +106,11 @@ export default function ExportMenu({ cv, onClose }) {
   }
 
   const completeAdUnlock = async () => {
+    if (!sessionId || !cv?.id) {
+      setError('Missing session or CV identifier. Reload the page and try again.')
+      return
+    }
+
     setLoading('ad')
     try {
       await paymentAPI.recordAdUnlock({ sessionId, cvId: cv.id, unlockType: 'download' })

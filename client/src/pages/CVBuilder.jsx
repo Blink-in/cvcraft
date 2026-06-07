@@ -27,7 +27,11 @@ export default function CVBuilder() {
   const [titleEditing, setTitleEditing] = useState(false)
   const [unlocking, setUnlocking] = useState(null)
   const [unlockError, setUnlockError] = useState('')
-  const adAvailable = Boolean(window?.CVCraftRewardedAdAvailable)
+  const [adAvailable, setAdAvailable] = useState(false)
+
+  useEffect(() => {
+    setAdAvailable(Boolean(window?.CVCraftRewardedAdAvailable))
+  }, [])
 
   useEffect(() => {
     if (!cv) { navigate('/dashboard'); return }
@@ -39,6 +43,7 @@ export default function CVBuilder() {
 
     const blockUnpaidCaptureShortcuts = (event) => {
       const key = String(event.key || '').toLowerCase()
+      const shortcutBlocked = (event.ctrlKey || event.metaKey) && ['p', 's'].includes(key)
       const printScreenBlocked = event.key === 'PrintScreen'
 
       if (!shortcutBlocked && !printScreenBlocked) return
@@ -88,6 +93,11 @@ export default function CVBuilder() {
   }, [id, cv])
 
   const startEditCheckout = async (provider) => {
+    if (!sessionId || !cv?.id) {
+      setUnlockError('Missing session or CV identifier. Reload the page and try again.')
+      return
+    }
+
     setUnlocking(`pay-edit-${provider}`)
     setUnlockError('')
     try {
@@ -107,15 +117,21 @@ export default function CVBuilder() {
   }
 
   const unlockEditWithAd = async () => {
+    if (!adAvailable) {
+      setUnlockError('Rewarded ads are not available yet. Please use Paystack or Flutterwave.')
+      return
+    }
+
+    if (!sessionId || !cv?.id) {
+      setUnlockError('Missing session or CV identifier. Reload the page and try again.')
+      return
+    }
+
     setUnlocking('ad-edit')
     setUnlockError('')
     try {
-      if (window.CVCraftRewardedAd?.show) {
-        const watched = await window.CVCraftRewardedAd.show()
-        if (!watched) throw new Error('Please finish the ad to unlock editing.')
-      } else {
-        await new Promise(resolve => setTimeout(resolve, 60000))
-      }
+      const watched = window.CVCraftRewardedAd?.show ? await window.CVCraftRewardedAd.show() : false
+      if (!watched) throw new Error('Please finish the ad to unlock editing.')
       await paymentAPI.recordAdUnlock({ sessionId, cvId: cv.id, unlockType: 'edit' })
       unlockCVAccess(cv.id, 'rewarded_ad', 'edit')
     } catch (err) {
