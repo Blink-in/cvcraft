@@ -3,6 +3,7 @@ const { connectDB } = require('./_lib/mongoose')
 const Entitlement = require('./_lib/models/Entitlement')
 const PaymentAttempt = require('./_lib/models/PaymentAttempt')
 
+const PAYSTACK_NGN_RATE = Number(process.env.PAYSTACK_NGN_RATE || 1500)
 const PRICE_CENTS = Number(process.env.PAYMENT_PRICE_CENTS || process.env.LEMON_SQUEEZY_PRICE_CENTS || 250)
 const PRICE_AMOUNT = Number((PRICE_CENTS / 100).toFixed(2))
 
@@ -145,6 +146,7 @@ async function createPaystackCheckout({ sessionId, cvId, cvTitle, unlockType, re
 
   const reference = createReference('ps')
   const currency = getCurrencyForProvider('paystack')
+  const amount = currency === 'NGN' ? Math.round(PRICE_CENTS / 100 * PAYSTACK_NGN_RATE * 100) : PRICE_CENTS
   const attempt = await createPaymentAttempt({
     provider: 'paystack',
     reference,
@@ -153,6 +155,7 @@ async function createPaystackCheckout({ sessionId, cvId, cvTitle, unlockType, re
     unlockType,
     customerEmail,
     currency,
+    amount,
   })
 
   const response = await fetch('https://api.paystack.co/transaction/initialize', {
@@ -163,7 +166,7 @@ async function createPaystackCheckout({ sessionId, cvId, cvTitle, unlockType, re
     },
     body: JSON.stringify({
       email: normalizeEmail(customerEmail, sessionId),
-      amount: PRICE_CENTS,
+      amount,
       currency,
       reference,
       callback_url: addPaymentParams(safeReturnUrl(redirectUrl, origin, cvId), 'paystack'),
@@ -521,14 +524,14 @@ function fromFlutterwavePayment(data) {
   }
 }
 
-async function createPaymentAttempt({ provider, reference, sessionId, cvId, unlockType, customerEmail, currency }) {
+async function createPaymentAttempt({ provider, reference, sessionId, cvId, unlockType, customerEmail, currency, amount }) {
   return PaymentAttempt.create({
     provider,
     reference,
     sessionId,
     cvId,
     unlockType,
-    amount: PRICE_CENTS,
+    amount: amount || PRICE_CENTS,
     currency: currency || getCurrencyForProvider(provider),
     customerEmail: customerEmail || null,
     expiresAt: new Date(Date.now() + CHECKOUT_TTL_MINUTES * 60 * 1000),
