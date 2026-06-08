@@ -1,21 +1,36 @@
-import { useNavigate } from 'react-router-dom'
-const navigate = useNavigate()
-const fileRef = useRef()
+import { useNavigate, useRef } from 'react-router-dom'
+import { useStore } from '../store/index.js'
+import { Plus, FileText, Copy, Trash2, Clock, Download, Upload, ArrowLeft, Bug } from 'lucide-react'
+import { formatDistanceToNow } from '../utils/date.js'
+import { downloadJSON, importData } from '../utils/io.js'
+
+function EmptyState({ onAction, label, icon: Icon }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 border border-dashed border-obsidian-700 rounded-xl text-center">
+      <div className="w-12 h-12 rounded-full bg-obsidian-800 flex items-center justify-center mb-4">
+        <Icon size={22} className="text-obsidian-500" />
+      </div>
+      <p className="text-obsidian-400 mb-4 text-sm">No documents yet</p>
+      <button onClick={onAction} className="btn-primary py-2 px-5 text-sm">
+        <Plus size={15} />
+        {label}
+      </button>
+    </div>
+  )
+}
+
+export default function Dashboard() {
+  const navigate = useNavigate()
+  const fileRef = useRef()
   const {
     cvs, coverLetters,
     createCV, duplicateCV, deleteCV,
-    createCoverLetter, duplicateCoverLetter, deleteCoverLetter,
-    exportData, importData,
+    exportData, importData: importStoreData,
   } = useStore()
 
   const handleNewCV = () => {
     const cv = createCV({ title: 'My CV' })
     navigate(`/cv/${cv.id}`)
-  }
-
-  const handleNewCL = () => {
-    const cl = createCoverLetter({ title: 'My Cover Letter' })
-    navigate(`/cover-letter/${cl.id}`)
   }
 
   const handleExport = () => {
