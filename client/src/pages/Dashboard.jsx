@@ -1,9 +1,8 @@
 import { useNavigate } from 'react-router-dom'
-import { useRef } from 'react'
 import { useStore } from '../store/index.js'
 import { Plus, FileText, Copy, Trash2, Clock, Download, Upload, ArrowLeft, Bug } from 'lucide-react'
 import { formatDistanceToNow } from '../utils/date.js'
-import { downloadJSON, importData } from '../utils/io.js'
+import { downloadJSON, importJSON } from '../utils/io.js'
 
 function EmptyState({ onAction, label, icon: Icon }) {
   return (
@@ -22,11 +21,10 @@ function EmptyState({ onAction, label, icon: Icon }) {
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const fileRef = useRef()
   const {
-    cvs, coverLetters,
+    cvs,
     createCV, duplicateCV, deleteCV,
-    exportData, importData: importStoreData,
+    exportData, importData,
   } = useStore()
 
   const handleNewCV = () => {
@@ -39,16 +37,15 @@ export default function Dashboard() {
     downloadJSON(json, 'cvcraft-backup.json')
   }
 
-  const handleImport = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      const success = importData(ev.target.result)
+  const handleImport = async () => {
+    try {
+      const json = await importJSON()
+      if (!json) return
+      const success = importData(JSON.stringify(json))
       alert(success ? '✓ Data imported successfully!' : '✗ Invalid file format.')
+    } catch {
+      alert('✗ Invalid file format.')
     }
-    reader.readAsText(file)
-    e.target.value = ''
   }
 
   return (
@@ -70,11 +67,10 @@ export default function Dashboard() {
             <Download size={13} />
             Export Backup
           </button>
-          <button onClick={() => fileRef.current?.click()} className="btn-secondary py-2 px-3 text-xs">
+          <button onClick={handleImport} className="btn-secondary py-2 px-3 text-xs">
             <Upload size={13} />
             Import
           </button>
-          <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
           <button onClick={() => navigate('/report-issue')} className="btn-ghost py-2 px-3 text-xs text-red-400 hover:text-red-300 ml-2">
             <Bug size={13} className="inline mr-1" />
             Issue
