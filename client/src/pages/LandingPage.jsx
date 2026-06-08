@@ -180,7 +180,15 @@ export default function LandingPage() {
       <footer className="border-t border-obsidian-900 py-8 px-6">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <span className="font-display text-lg font-bold text-gradient">CVCraft</span>
-          <p className="text-xs text-obsidian-600">Built with React + Node.js · No data leaves your browser without permission</p>
+          <div className="flex items-center gap-4">
+            <button onClick={() => navigate('/privacy-policy')} className="text-xs text-obsidian-600 hover:text-obsidian-400 transition-colors">
+              Privacy Policy
+            </button>
+            <button onClick={() => navigate('/report-issue')} className="text-xs text-obsidian-600 hover:text-obsidian-400 transition-colors">
+              Report Issue
+            </button>
+            <p className="text-xs text-obsidian-600">Built with React + Node.js · No data leaves your browser without permission</p>
+          </div>
         </div>
       </footer>
     </div>

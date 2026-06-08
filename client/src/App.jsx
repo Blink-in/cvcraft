@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard.jsx'
 import CVBuilder from './pages/CVBuilder.jsx'
 import CoverLetterBuilder from './pages/CoverLetterBuilder.jsx'
 import ReportIssue from './pages/ReportIssue.jsx'
+import PrivacyPolicy from './pages/PrivacyPolicy.jsx'
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
       <Route path="/cv/:id" element={<CVBuilder />} />
       <Route path="/cover-letter/:id" element={<CoverLetterBuilder />} />
       <Route path="/report-issue" element={<ReportIssue />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
