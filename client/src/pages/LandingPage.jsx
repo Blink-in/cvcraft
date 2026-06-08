@@ -181,25 +181,12 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <span className="font-display text-lg font-bold text-gradient">CVCraft</span>
           <div className="flex items-center gap-4">
-            <button onClick={() => navigate('/about')} className="text-xs text-obsidian-600 hover:text-obsidian-400 transition-colors">
-              About
-            </button>
-            <button onClick={() => navigate('/contact')} className="text-xs text-obsidian-600 hover:text-obsidian-400 transition-colors">
-              Contact
-            </button>
-            <button onClick={() => navigate('/privacy-policy')} className="text-xs text-obsidian-600 hover:text-obsidian-400 transition-colors">
-              Privacy Policy
-            </button>
-            <button onClick={() => navigate('/terms-of-service')} className="text-xs text-obsidian-600 hover:text-obsidian-400 transition-colors">
-              Terms
-            </button>
-            <button onClick={() => navigate('/cv-writing-guide')} className="text-xs text-obsidian-600 hover:text-obsidian-400 transition-colors">
-              CV Guide
-            </button>
-            <button onClick={() => navigate('/report-issue')} className="text-xs text-obsidian-600 hover:text-obsidian-400 transition-colors">
-              Report Issue
-            </button>
-            <p className="text-xs text-obsidian-600">Built with React + Node.js · No data leaves your browser without permission</p>
+            <button onClick={() => navigate('/about')} className="text-xs text-obsidian-600 hover:text-obsidian-400 transition-colors">About</button>
+            <button onClick={() => navigate('/contact')} className="text-xs text-obsidian-600 hover:text-obsidian-400 transition-colors">Contact</button>
+            <button onClick={() => navigate('/privacy-policy')} className="text-xs text-obsidian-600 hover:text-obsidian-400 transition-colors">Privacy Policy</button>
+            <button onClick={() => navigate('/terms-of-service')} className="text-xs text-obsidian-600 hover:text-obsidian-400 transition-colors">Terms</button>
+            <button onClick={() => navigate('/cv-writing-guide')} className="text-xs text-obsidian-600 hover:text-obsidian-400 transition-colors">CV Guide</button>
+            <button onClick={() => navigate('/report-issue')} className="text-xs text-obsidian-600 hover:text-obsidian-400 transition-colors">Report Issue</button>
           </div>
         </div>
       </footer>
