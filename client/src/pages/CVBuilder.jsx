@@ -28,6 +28,8 @@ export default function CVBuilder() {
   const [unlocking, setUnlocking] = useState(null)
   const [unlockError, setUnlockError] = useState('')
   const [adAvailable, setAdAvailable] = useState(false)
+  const [editEmail, setEditEmail] = useState(cv?.sections?.personal?.data?.email || '')
+  const [editEmailError, setEditEmailError] = useState('')
 
   useEffect(() => {
     setAdAvailable(Boolean(window?.CVCraftRewardedAdAvailable))
@@ -98,8 +100,15 @@ export default function CVBuilder() {
       return
     }
 
+    const trimmedEmail = editEmail.trim()
+    if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setEditEmailError('A valid email is required to unlock editing.')
+      return
+    }
+
     setUnlocking(`pay-edit-${provider}`)
     setUnlockError('')
+    setEditEmailError('')
     try {
       const { data } = await paymentAPI.createCheckout({
         provider,
@@ -108,6 +117,7 @@ export default function CVBuilder() {
         cvTitle: cv.title,
         unlockType: 'edit',
         redirectUrl: `${window.location.origin}/cv/${cv.id}?payment=success`,
+        customerEmail: trimmedEmail,
       })
       window.location.href = data.checkoutUrl
     } catch (err) {
@@ -222,6 +232,9 @@ export default function CVBuilder() {
             adAvailable={adAvailable}
             onPay={startEditCheckout}
             onAd={unlockEditWithAd}
+            editEmail={editEmail}
+            onEditEmailChange={setEditEmail}
+            editEmailError={editEmailError}
           />
         )}
 
@@ -246,7 +259,7 @@ function getPaymentProviderFromReturn(searchParams, data) {
   return provider || source || 'paystack'
 }
 
-function LockedEditorPanel({ loading, error, adAvailable, onPay, onAd }) {
+function LockedEditorPanel({ loading, error, adAvailable, onPay, onAd, editEmail, onEditEmailChange, editEmailError }) {
   return (
     <aside className="w-80 flex-shrink-0 border-r border-obsidian-900 bg-obsidian-950/80 p-5">
       <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
@@ -257,6 +270,17 @@ function LockedEditorPanel({ loading, error, adAvailable, onPay, onAd }) {
         </p>
         {error && <p className="mt-3 rounded border border-red-500/20 bg-red-500/10 px-2 py-1.5 text-xs text-red-300">{error}</p>}
         <div className="mt-4 space-y-2">
+          <div>
+            <label className="block text-[11px] font-medium text-obsidian-400 mb-1">Email for receipt</label>
+            <input
+              type="email"
+              value={editEmail}
+              onChange={(e) => onEditEmailChange(e.target.value)}
+              placeholder="your@email.com"
+              className="w-full px-3 py-2 rounded-lg bg-obsidian-800 border border-obsidian-700 text-obsidian-100 text-xs outline-none focus:border-amber-500/50"
+            />
+            {editEmailError && <p className="mt-1 text-[11px] text-red-400">{editEmailError}</p>}
+          </div>
           <button onClick={() => onPay('paystack')} disabled={Boolean(loading)} className="btn-primary w-full justify-center py-2 text-xs">
             {loading === 'pay-edit-paystack' ? <Loader2 size={14} className="animate-spin" /> : <BadgeDollarSign size={14} />}
             Paystack
