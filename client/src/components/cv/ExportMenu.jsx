@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { X, FileDown, FileJson, Printer, Loader2, BadgeDollarSign, Clapperboard, ShieldCheck, RefreshCw } from 'lucide-react'
 import { exportCVasPDF } from '../../utils/exportPDF.js'
 import { downloadJSON } from '../../utils/io.js'
@@ -10,10 +10,32 @@ export default function ExportMenu({ cv, onClose }) {
   const [error, setError] = useState('')
   const [adOpen, setAdOpen] = useState(false)
   const [adSeconds, setAdSeconds] = useState(0)
+  const [adAvailable, setAdAvailable] = useState(false)
+  const [adConfigCountdown, setAdConfigCountdown] = useState(60)
+  const [customerEmail, setCustomerEmail] = useState('')
+  const [emailError, setEmailError] = useState('')
   const sessionId = useStore(s => s.sessionId)
   const { updateCVPayment, markCVDownloaded, unlockCVAccess } = useStore()
 
   const downloadUnlocked = cv.monetization?.downloadUnlocked
+
+  useEffect(() => {
+    setAdAvailable(Boolean(window?.CVCraftRewardedAdAvailable))
+  }, [])
+
+  useEffect(() => {
+    if (adAvailable) return
+    let remaining = 60
+    setAdConfigCountdown(remaining)
+    const timer = window.setInterval(() => {
+      remaining -= 1
+      setAdConfigCountdown(remaining)
+      if (remaining <= 0) {
+        window.clearInterval(timer)
+      }
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [adAvailable])
 
   const refreshEntitlement = async () => {
     setLoading('refresh')
@@ -34,16 +56,36 @@ export default function ExportMenu({ cv, onClose }) {
     }
   }
 
+  const validateEmail = (email) => {
+    const trimmed = email.trim()
+    if (!trimmed) return 'Email is required'
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return 'Please enter a valid email address'
+    return ''
+  }
+
   const startCheckout = async (provider, unlockType = 'download') => {
+    if (!sessionId || !cv?.id) {
+      setError('Missing session or CV identifier. Reload the page and try again.')
+      return
+    }
+
+    const emailValidationError = validateEmail(customerEmail)
+    if (emailValidationError) {
+      setEmailError(emailValidationError)
+      return
+    }
+
     setLoading(`pay-${provider}-${unlockType}`)
     setError('')
+    setEmailError('')
     try {
       const { data } = await paymentAPI.createCheckout({
         provider,
         sessionId,
         cvId: cv.id,
-        cvTitle: cv.title,
+        cvTitle: cv.title || 'Untitled CV',
         unlockType,
+        customerEmail: customerEmail.trim(),
         redirectUrl: `${window.location.origin}/cv/${cv.id}?payment=success`,
       })
       updateCVPayment(cv.id, { lastCheckoutAt: new Date().toISOString() })
@@ -55,6 +97,11 @@ export default function ExportMenu({ cv, onClose }) {
   }
 
   const startRewardedAd = async () => {
+    if (!adAvailable) {
+      setError('Rewarded ads are not available yet. Please use Paystack or Flutterwave.')
+      return
+    }
+
     setError('')
     setAdOpen(true)
 
@@ -71,20 +118,16 @@ export default function ExportMenu({ cv, onClose }) {
       return
     }
 
-    setAdSeconds(60)
-    let remaining = 60
-    const timer = window.setInterval(async () => {
-      remaining -= 1
-      setAdSeconds(remaining)
-      if (remaining <= 0) {
-        window.clearInterval(timer)
-        await completeAdUnlock()
-        setAdOpen(false)
-      }
-    }, 1000)
+    setError('Rewarded ads are not available yet. Please use Paystack or Flutterwave.')
+    setAdOpen(false)
   }
 
   const completeAdUnlock = async () => {
+    if (!sessionId || !cv?.id) {
+      setError('Missing session or CV identifier. Reload the page and try again.')
+      return
+    }
+
     setLoading('ad')
     try {
       await paymentAPI.recordAdUnlock({ sessionId, cvId: cv.id, unlockType: 'download' })
@@ -111,7 +154,8 @@ export default function ExportMenu({ cv, onClose }) {
     if (!downloadUnlocked) return
     setLoading('json')
     const json = JSON.stringify({ cv }, null, 2)
-    downloadJSON(json, `${cv.title.replace(/\s+/g, '-').toLowerCase()}.json`)
+    const filename = `${(cv.title || 'cv').replace(/\s+/g, '-').toLowerCase()}.json`
+    downloadJSON(json, filename)
     markCVDownloaded(cv.id)
     setTimeout(() => setLoading(null), 600)
   }
@@ -133,7 +177,7 @@ export default function ExportMenu({ cv, onClose }) {
 
         {!downloadUnlocked && (
           <div className="mb-4 rounded-lg border border-amber-500/25 bg-amber-500/10 p-3">
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-3 mb-3">
               <ShieldCheck size={18} className="mt-0.5 text-amber-300" />
               <div>
                 <p className="text-sm font-semibold text-obsidian-100">Unlock this CV to download</p>
@@ -142,6 +186,29 @@ export default function ExportMenu({ cv, onClose }) {
                 </p>
               </div>
             </div>
+
+            <div className="mb-3 space-y-2">
+              <label className="text-xs font-semibold text-obsidian-200 block">
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={customerEmail}
+                onChange={(e) => {
+                  setCustomerEmail(e.target.value)
+                  setEmailError('')
+                }}
+                placeholder="your@email.com"
+                disabled={loading?.startsWith?.('pay')}
+                className={`w-full px-3 py-2 rounded-lg bg-obsidian-800 border text-sm text-obsidian-100 placeholder:text-obsidian-500 outline-none transition-colors ${
+                  emailError
+                    ? 'border-red-500/50 focus:border-red-500'
+                    : 'border-obsidian-700 focus:border-amber-500/50'
+                }`}
+              />
+              {emailError && <p className="text-xs text-red-400">{emailError}</p>}
+            </div>
+
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button
                 onClick={() => startCheckout('paystack', 'download')}
@@ -161,13 +228,18 @@ export default function ExportMenu({ cv, onClose }) {
               </button>
               <button
                 onClick={startRewardedAd}
-                disabled={loading === 'ad'}
+                disabled={loading === 'ad' || !adAvailable}
                 className="btn-secondary col-span-2 justify-center py-2 text-xs"
               >
                 {loading === 'ad' ? <Loader2 size={14} className="animate-spin" /> : <Clapperboard size={14} />}
-                Watch Ad
+                {adAvailable ? 'Watch Ad' : 'Watch Ad (coming soon)'}
               </button>
             </div>
+            <p className="mt-2 text-[11px] text-obsidian-400">
+              {adAvailable
+                ? 'Rewarded ad unlocks are enabled.'
+                : `Rewarded ads are not configured yet.${adConfigCountdown > 0 ? ` Available in ${adConfigCountdown}s.` : ' Coming soon.'}`}
+            </p>
             <button
               onClick={refreshEntitlement}
               disabled={loading === 'refresh'}

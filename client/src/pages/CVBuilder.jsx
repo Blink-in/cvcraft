@@ -27,6 +27,11 @@ export default function CVBuilder() {
   const [titleEditing, setTitleEditing] = useState(false)
   const [unlocking, setUnlocking] = useState(null)
   const [unlockError, setUnlockError] = useState('')
+  const [adAvailable, setAdAvailable] = useState(false)
+
+  useEffect(() => {
+    setAdAvailable(Boolean(window?.CVCraftRewardedAdAvailable))
+  }, [])
 
   useEffect(() => {
     if (!cv) { navigate('/dashboard'); return }
@@ -37,7 +42,7 @@ export default function CVBuilder() {
     if (!cv || cv.monetization?.downloadUnlocked) return
 
     const blockUnpaidCaptureShortcuts = (event) => {
-      const key = event.key.toLowerCase()
+      const key = String(event.key || '').toLowerCase()
       const shortcutBlocked = (event.ctrlKey || event.metaKey) && ['p', 's'].includes(key)
       const printScreenBlocked = event.key === 'PrintScreen'
 
@@ -88,6 +93,11 @@ export default function CVBuilder() {
   }, [id, cv])
 
   const startEditCheckout = async (provider) => {
+    if (!sessionId || !cv?.id) {
+      setUnlockError('Missing session or CV identifier. Reload the page and try again.')
+      return
+    }
+
     setUnlocking(`pay-edit-${provider}`)
     setUnlockError('')
     try {
@@ -107,15 +117,21 @@ export default function CVBuilder() {
   }
 
   const unlockEditWithAd = async () => {
+    if (!adAvailable) {
+      setUnlockError('Rewarded ads are not available yet. Please use Paystack or Flutterwave.')
+      return
+    }
+
+    if (!sessionId || !cv?.id) {
+      setUnlockError('Missing session or CV identifier. Reload the page and try again.')
+      return
+    }
+
     setUnlocking('ad-edit')
     setUnlockError('')
     try {
-      if (window.CVCraftRewardedAd?.show) {
-        const watched = await window.CVCraftRewardedAd.show()
-        if (!watched) throw new Error('Please finish the ad to unlock editing.')
-      } else {
-        await new Promise(resolve => setTimeout(resolve, 60000))
-      }
+      const watched = window.CVCraftRewardedAd?.show ? await window.CVCraftRewardedAd.show() : false
+      if (!watched) throw new Error('Please finish the ad to unlock editing.')
       await paymentAPI.recordAdUnlock({ sessionId, cvId: cv.id, unlockType: 'edit' })
       unlockCVAccess(cv.id, 'rewarded_ad', 'edit')
     } catch (err) {
@@ -203,6 +219,7 @@ export default function CVBuilder() {
           <LockedEditorPanel
             loading={unlocking}
             error={unlockError}
+            adAvailable={adAvailable}
             onPay={startEditCheckout}
             onAd={unlockEditWithAd}
           />
@@ -229,7 +246,7 @@ function getPaymentProviderFromReturn(searchParams, data) {
   return provider || source || 'paystack'
 }
 
-function LockedEditorPanel({ loading, error, onPay, onAd }) {
+function LockedEditorPanel({ loading, error, adAvailable, onPay, onAd }) {
   return (
     <aside className="w-80 flex-shrink-0 border-r border-obsidian-900 bg-obsidian-950/80 p-5">
       <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
@@ -248,10 +265,13 @@ function LockedEditorPanel({ loading, error, onPay, onAd }) {
             {loading === 'pay-edit-flutterwave' ? <Loader2 size={14} className="animate-spin" /> : <BadgeDollarSign size={14} />}
             Flutterwave
           </button>
-          <button onClick={onAd} disabled={Boolean(loading)} className="btn-secondary w-full justify-center py-2 text-xs">
+          <button onClick={onAd} disabled={Boolean(loading) || !adAvailable} className="btn-secondary w-full justify-center py-2 text-xs">
             {loading === 'ad-edit' ? <Loader2 size={14} className="animate-spin" /> : <Clapperboard size={14} />}
-            Watch Ad to Edit
+            {adAvailable ? 'Watch Ad to Edit' : 'Watch Ad (coming soon)'}
           </button>
+          {!adAvailable && (
+            <p className="mt-2 text-xs text-obsidian-400">Rewarded ad unlocks are not available yet. Use Paystack or Flutterwave to unlock editing.</p>
+          )}
         </div>
       </div>
     </aside>

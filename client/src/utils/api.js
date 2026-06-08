@@ -30,8 +30,24 @@ export const paymentAPI = {
     })
     return api.get(`/payment?${query.toString()}`)
   },
-  createCheckout: (data) => api.post('/payment?action=checkout', data),
-  recordAdUnlock: (data) => api.post('/payment?action=ad-unlock', data),
+  createCheckout: (data) => {
+    const { sessionId, cvId } = data || {}
+    if (!sessionId || !cvId) {
+      const error = new Error('Missing checkout identifiers')
+      error.response = { data: { error: 'Missing sessionId or cvId' } }
+      return Promise.reject(error)
+    }
+    return api.post('/payment?action=checkout', data)
+  },
+  recordAdUnlock: (data) => {
+    const { sessionId, cvId } = data || {}
+    if (!sessionId || !cvId) {
+      const error = new Error('Missing ad unlock identifiers')
+      error.response = { data: { error: 'Missing sessionId or cvId' } }
+      return Promise.reject(error)
+    }
+    return api.post('/payment?action=ad-unlock', data)
+  },
 }
 
 export default api
