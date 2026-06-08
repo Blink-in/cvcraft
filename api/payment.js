@@ -3,7 +3,7 @@ const { connectDB } = require('./_lib/mongoose')
 const Entitlement = require('./_lib/models/Entitlement')
 const PaymentAttempt = require('./_lib/models/PaymentAttempt')
 
-const PAYSTACK_NGN_RATE = Number(process.env.PAYSTACK_NGN_RATE || 1500)
+const PAYSTACK_NGN_RATE = Number(process.env.PAYSTACK_NGN_RATE || 1300)
 const PRICE_CENTS = Number(process.env.PAYMENT_PRICE_CENTS || process.env.LEMON_SQUEEZY_PRICE_CENTS || 250)
 const PRICE_AMOUNT = Number((PRICE_CENTS / 100).toFixed(2))
 
