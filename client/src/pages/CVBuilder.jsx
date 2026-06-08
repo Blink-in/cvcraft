@@ -1,7 +1,7 @@
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useStore } from '../store/index.js'
 import { useEffect, useState, useCallback } from 'react'
-import { ArrowLeft, Eye, EyeOff, Layout, Download, Settings, Lock, BadgeDollarSign, Clapperboard, Loader2 } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff, Layout, Download, Settings } from 'lucide-react'
 
 import EditorSidebar from '../components/cv/EditorSidebar.jsx'
 import CVPreview from '../components/cv/CVPreview.jsx'
@@ -14,7 +14,7 @@ export default function CVBuilder() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { setActiveCV, updateCV, updateCVPayment, unlockCVAccess } = useStore()
+  const { setActiveCV, updateCV, updateCVPayment } = useStore()
   const sessionId = useStore(s => s.sessionId)
   const cv = useStore(s => s.cvs.find(c => c.id === id))
   const activeSection = useStore(s => s.activeSection)
@@ -28,8 +28,6 @@ export default function CVBuilder() {
   const [unlocking, setUnlocking] = useState(null)
   const [unlockError, setUnlockError] = useState('')
   const [adAvailable, setAdAvailable] = useState(false)
-  const [editEmail, setEditEmail] = useState(cv?.sections?.personal?.data?.email || '')
-  const [editEmailError, setEditEmailError] = useState('')
 
   useEffect(() => {
     setAdAvailable(Boolean(window?.CVCraftRewardedAdAvailable))
@@ -71,9 +69,8 @@ export default function CVBuilder() {
         if (!alive) return
         updateCVPayment(cv.id, {
           downloadUnlocked: Boolean(data.downloadUnlocked || cv.monetization?.downloadUnlocked),
-          editUnlocked: Boolean(data.editUnlocked || cv.monetization?.editUnlocked),
-          paidAt: data.downloadUnlocked || data.editUnlocked ? new Date().toISOString() : cv.monetization?.paidAt,
-          unlockedBy: data.downloadUnlocked || data.editUnlocked ? paidSource : cv.monetization?.unlockedBy,
+          paidAt: data.downloadUnlocked ? new Date().toISOString() : cv.monetization?.paidAt,
+          unlockedBy: data.downloadUnlocked ? paidSource : cv.monetization?.unlockedBy,
         })
       } catch (err) {
         if (alive) setUnlockError(err.response?.data?.error || 'Payment received, but verification is still pending. Use Export > I already paid in a moment.')
@@ -90,69 +87,10 @@ export default function CVBuilder() {
   }, [cv?.id, searchParams])
 
   const handleTitleChange = useCallback((e) => {
-    if (isEditLocked(cv)) return
     updateCV(id, c => ({ ...c, title: e.target.value }))
-  }, [id, cv])
-
-  const startEditCheckout = async (provider) => {
-    if (!sessionId || !cv?.id) {
-      setUnlockError('Missing session or CV identifier. Reload the page and try again.')
-      return
-    }
-
-    const trimmedEmail = editEmail.trim()
-    if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-      setEditEmailError('A valid email is required to unlock editing.')
-      return
-    }
-
-    setUnlocking(`pay-edit-${provider}`)
-    setUnlockError('')
-    setEditEmailError('')
-    try {
-      const { data } = await paymentAPI.createCheckout({
-        provider,
-        sessionId,
-        cvId: cv.id,
-        cvTitle: cv.title,
-        unlockType: 'edit',
-        redirectUrl: `${window.location.origin}/cv/${cv.id}?payment=success`,
-        customerEmail: trimmedEmail,
-      })
-      window.location.href = data.checkoutUrl
-    } catch (err) {
-      setUnlockError(err.response?.data?.error || 'Unable to start checkout.')
-      setUnlocking(null)
-    }
-  }
-
-  const unlockEditWithAd = async () => {
-    if (!adAvailable) {
-      setUnlockError('Rewarded ads are not available yet. Please use Paystack or Flutterwave.')
-      return
-    }
-
-    if (!sessionId || !cv?.id) {
-      setUnlockError('Missing session or CV identifier. Reload the page and try again.')
-      return
-    }
-
-    setUnlocking('ad-edit')
-    setUnlockError('')
-    try {
-      const watched = window.CVCraftRewardedAd?.show ? await window.CVCraftRewardedAd.show() : false
-      if (!watched) throw new Error('Please finish the ad to unlock editing.')
-      await paymentAPI.recordAdUnlock({ sessionId, cvId: cv.id, unlockType: 'edit' })
-      unlockCVAccess(cv.id, 'rewarded_ad', 'edit')
-    } catch (err) {
-      setUnlockError(err.response?.data?.error || err.message || 'The ad provider was not available.')
-    } finally {
-      setUnlocking(null)
-    }
-  }
+  }, [id, updateCV])
 
   if (!cv) return null
-  const editLocked = isEditLocked(cv)
 
   return (
     <div className="flex flex-col h-screen bg-obsidian-950 font-body overflow-hidden">
@@ -165,7 +103,6 @@ export default function CVBuilder() {
 
         <span className="text-obsidian-700">|</span>
 
-        {/* Editable title */}
         {titleEditing ? (
           <input
             autoFocus
@@ -177,9 +114,8 @@ export default function CVBuilder() {
           />
         ) : (
           <button
-            disabled={editLocked}
             onClick={() => setTitleEditing(true)}
-            className="text-sm font-semibold text-obsidian-200 hover:text-obsidian-100 truncate max-w-xs disabled:cursor-not-allowed disabled:opacity-50"
+            className="text-sm font-semibold text-obsidian-200 hover:text-obsidian-100 truncate max-w-xs"
           >
             {cv.title}
           </button>
@@ -189,11 +125,11 @@ export default function CVBuilder() {
 
         {/* Actions */}
         <div className="flex items-center gap-1.5">
-          <button disabled={editLocked} onClick={() => { setShowTemplates(!showTemplates); setShowCustomize(false) }} className={`btn-ghost py-1.5 px-3 text-xs disabled:opacity-40 ${showTemplates ? 'text-amber-400 bg-amber-500/10' : ''}`}>
+          <button onClick={() => { setShowTemplates(!showTemplates); setShowCustomize(false) }} className={`btn-ghost py-1.5 px-3 text-xs ${showTemplates ? 'text-amber-400 bg-amber-500/10' : ''}`}>
             <Layout size={13} />
             <span className="hidden md:inline">Templates</span>
           </button>
-          <button disabled={editLocked} onClick={() => { setShowCustomize(!showCustomize); setShowTemplates(false) }} className={`btn-ghost py-1.5 px-3 text-xs disabled:opacity-40 ${showCustomize ? 'text-amber-400 bg-amber-500/10' : ''}`}>
+          <button onClick={() => { setShowCustomize(!showCustomize); setShowTemplates(false) }} className={`btn-ghost py-1.5 px-3 text-xs ${showCustomize ? 'text-amber-400 bg-amber-500/10' : ''}`}>
             <Settings size={13} />
             <span className="hidden md:inline">Customize</span>
           </button>
@@ -221,22 +157,7 @@ export default function CVBuilder() {
 
       {/* ── Main layout ── */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Editor sidebar - hidden in full preview mode */}
-        {!previewMode && !editLocked && (
-          <EditorSidebar cv={cv} cvId={id} activeSection={activeSection} setActiveSection={setActiveSection} />
-        )}
-        {!previewMode && editLocked && (
-          <LockedEditorPanel
-            loading={unlocking}
-            error={unlockError}
-            adAvailable={adAvailable}
-            onPay={startEditCheckout}
-            onAd={unlockEditWithAd}
-            editEmail={editEmail}
-            onEditEmailChange={setEditEmail}
-            editEmailError={editEmailError}
-          />
-        )}
+        <EditorSidebar cv={cv} cvId={id} activeSection={activeSection} setActiveSection={setActiveSection} />
 
         {/* Preview pane */}
         <div className={`flex-1 overflow-y-auto bg-obsidian-900/30 ${previewMode ? 'p-8' : 'p-4 md:p-8'}`}>
@@ -249,55 +170,8 @@ export default function CVBuilder() {
   )
 }
 
-function isEditLocked(cv) {
-  return Boolean(cv?.monetization?.downloadedAt && !cv?.monetization?.editUnlocked)
-}
-
 function getPaymentProviderFromReturn(searchParams, data) {
   const provider = searchParams.get('provider') || searchParams.get('paymentProvider')
   const source = data?.entitlements?.find(e => e.source && e.source !== 'rewarded_ad')?.source
   return provider || source || 'paystack'
-}
-
-function LockedEditorPanel({ loading, error, adAvailable, onPay, onAd, editEmail, onEditEmailChange, editEmailError }) {
-  return (
-    <aside className="w-80 flex-shrink-0 border-r border-obsidian-900 bg-obsidian-950/80 p-5">
-      <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
-        <Lock size={20} className="mb-3 text-amber-300" />
-        <h2 className="text-sm font-semibold text-obsidian-100">Editing is locked</h2>
-        <p className="mt-2 text-xs leading-relaxed text-obsidian-400">
-          This CV has already been downloaded. Unlock editing with Paystack, Flutterwave, or a rewarded ad; exports stay available after payment.
-        </p>
-        {error && <p className="mt-3 rounded border border-red-500/20 bg-red-500/10 px-2 py-1.5 text-xs text-red-300">{error}</p>}
-        <div className="mt-4 space-y-2">
-          <div>
-            <label className="block text-[11px] font-medium text-obsidian-400 mb-1">Email for receipt</label>
-            <input
-              type="email"
-              value={editEmail}
-              onChange={(e) => onEditEmailChange(e.target.value)}
-              placeholder="your@email.com"
-              className="w-full px-3 py-2 rounded-lg bg-obsidian-800 border border-obsidian-700 text-obsidian-100 text-xs outline-none focus:border-amber-500/50"
-            />
-            {editEmailError && <p className="mt-1 text-[11px] text-red-400">{editEmailError}</p>}
-          </div>
-          <button onClick={() => onPay('paystack')} disabled={Boolean(loading)} className="btn-primary w-full justify-center py-2 text-xs">
-            {loading === 'pay-edit-paystack' ? <Loader2 size={14} className="animate-spin" /> : <BadgeDollarSign size={14} />}
-            Paystack
-          </button>
-          <button onClick={() => onPay('flutterwave')} disabled={Boolean(loading)} className="btn-secondary w-full justify-center py-2 text-xs">
-            {loading === 'pay-edit-flutterwave' ? <Loader2 size={14} className="animate-spin" /> : <BadgeDollarSign size={14} />}
-            Flutterwave
-          </button>
-          <button onClick={onAd} disabled={Boolean(loading) || !adAvailable} className="btn-secondary w-full justify-center py-2 text-xs">
-            {loading === 'ad-edit' ? <Loader2 size={14} className="animate-spin" /> : <Clapperboard size={14} />}
-            {adAvailable ? 'Watch Ad to Edit' : 'Watch Ad (coming soon)'}
-          </button>
-          {!adAvailable && (
-            <p className="mt-2 text-xs text-obsidian-400">Rewarded ad unlocks are not available yet. Use Paystack or Flutterwave to unlock editing.</p>
-          )}
-        </div>
-      </div>
-    </aside>
-  )
 }

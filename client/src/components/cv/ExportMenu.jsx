@@ -30,7 +30,6 @@ export default function ExportMenu({ cv, onClose }) {
       const paidSource = data.entitlements?.find(e => e.source && e.source !== 'rewarded_ad')?.source || cv.monetization?.unlockedBy
       updateCVPayment(cv.id, {
         downloadUnlocked: Boolean(data.downloadUnlocked || cv.monetization?.downloadUnlocked),
-        editUnlocked: Boolean(data.editUnlocked || cv.monetization?.editUnlocked),
         paidAt: data.downloadUnlocked ? new Date().toISOString() : cv.monetization?.paidAt,
         unlockedBy: data.downloadUnlocked ? paidSource : cv.monetization?.unlockedBy,
       })
@@ -48,7 +47,7 @@ export default function ExportMenu({ cv, onClose }) {
     return ''
   }
 
-  const startCheckout = async (provider, unlockType = 'download') => {
+  const startCheckout = async (provider) => {
     if (!sessionId || !cv?.id) {
       setError('Missing session or CV identifier. Reload the page and try again.')
       return
@@ -60,7 +59,7 @@ export default function ExportMenu({ cv, onClose }) {
       return
     }
 
-    setLoading(`pay-${provider}-${unlockType}`)
+    setLoading(`pay-${provider}`)
     setError('')
     setEmailError('')
     try {
@@ -69,7 +68,7 @@ export default function ExportMenu({ cv, onClose }) {
         sessionId,
         cvId: cv.id,
         cvTitle: cv.title || 'Untitled CV',
-        unlockType,
+        unlockType: 'download',
         customerEmail: customerEmail.trim(),
         redirectUrl: `${window.location.origin}/cv/${cv.id}?payment=success`,
       })
@@ -196,19 +195,19 @@ export default function ExportMenu({ cv, onClose }) {
 
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button
-                onClick={() => startCheckout('paystack', 'download')}
+                onClick={() => startCheckout('paystack')}
                 disabled={loading?.startsWith?.('pay')}
                 className="btn-primary justify-center py-2 text-xs"
               >
-                {loading === 'pay-paystack-download' ? <Loader2 size={14} className="animate-spin" /> : <BadgeDollarSign size={14} />}
+                {loading === 'pay-paystack' ? <Loader2 size={14} className="animate-spin" /> : <BadgeDollarSign size={14} />}
                 Paystack
               </button>
               <button
-                onClick={() => startCheckout('flutterwave', 'download')}
+                onClick={() => startCheckout('flutterwave')}
                 disabled={loading?.startsWith?.('pay')}
                 className="btn-secondary justify-center py-2 text-xs"
               >
-                {loading === 'pay-flutterwave-download' ? <Loader2 size={14} className="animate-spin" /> : <BadgeDollarSign size={14} />}
+                {loading === 'pay-flutterwave' ? <Loader2 size={14} className="animate-spin" /> : <BadgeDollarSign size={14} />}
                 Flutterwave
               </button>
               <button
