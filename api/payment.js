@@ -37,6 +37,9 @@ async function handler(req, res) {
       const body = await readJson(req)
       const { sessionId, cvId, cvTitle, unlockType = 'download', redirectUrl, provider = 'paystack', customerEmail } = body || {}
       if (!sessionId || !cvId) return res.status(400).json({ error: 'sessionId and cvId are required' })
+      if (!customerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+        return res.status(400).json({ error: 'A valid email address is required for payment' })
+      }
 
       const normalizedProvider = normalizeProvider(provider)
       const normalizedUnlockType = normalizeUnlockType(unlockType)
@@ -671,7 +674,10 @@ function normalizeUnlockType(unlockType) {
 
 function normalizeEmail(email, sessionId) {
   if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return email
-  return `customer-${String(sessionId).replace(/[^a-z0-9]/gi, '').slice(0, 32)}@cvcraft.local`
+  // If no valid email provided, throw an error instead of using fallback
+  const err = new Error('A valid email address is required for payment')
+  err.statusCode = 400
+  throw err
 }
 
 function createReference(prefix) {

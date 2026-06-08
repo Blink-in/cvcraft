@@ -5,6 +5,7 @@ const mongoose = require('mongoose')
 
 const cvRoutes = require('./routes/cv')
 const coverLetterRoutes = require('./routes/coverLetter')
+const paymentHandler = require('../api/payment')
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -33,6 +34,8 @@ app.use(express.urlencoded({ extended: true }))
 // ── Routes ──────────────────────────────────────────────────────────────────
 app.use('/api/cv', cvRoutes)
 app.use('/api/cover-letter', coverLetterRoutes)
+app.post('/api/payment', paymentHandler)
+app.get('/api/payment', paymentHandler)
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })

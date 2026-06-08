@@ -34,7 +34,7 @@ export default function CVPreview({ cv, forExport = false }) {
       }}
       className="relative overflow-hidden shadow-2xl"
     >
-      <div className={protectedPreview ? 'select-none blur-[3px] opacity-55' : ''}>
+      <div className={protectedPreview ? 'select-none blur-[1px] opacity-75' : ''}>
         <Template cv={cv} />
       </div>
       {protectedPreview && <ProtectedPreviewOverlay />}

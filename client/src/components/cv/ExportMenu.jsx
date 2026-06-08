@@ -12,6 +12,8 @@ export default function ExportMenu({ cv, onClose }) {
   const [adSeconds, setAdSeconds] = useState(0)
   const [adAvailable, setAdAvailable] = useState(false)
   const [adConfigCountdown, setAdConfigCountdown] = useState(60)
+  const [customerEmail, setCustomerEmail] = useState('')
+  const [emailError, setEmailError] = useState('')
   const sessionId = useStore(s => s.sessionId)
   const { updateCVPayment, markCVDownloaded, unlockCVAccess } = useStore()
 
@@ -54,21 +56,36 @@ export default function ExportMenu({ cv, onClose }) {
     }
   }
 
+  const validateEmail = (email) => {
+    const trimmed = email.trim()
+    if (!trimmed) return 'Email is required'
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return 'Please enter a valid email address'
+    return ''
+  }
+
   const startCheckout = async (provider, unlockType = 'download') => {
     if (!sessionId || !cv?.id) {
       setError('Missing session or CV identifier. Reload the page and try again.')
       return
     }
 
+    const emailValidationError = validateEmail(customerEmail)
+    if (emailValidationError) {
+      setEmailError(emailValidationError)
+      return
+    }
+
     setLoading(`pay-${provider}-${unlockType}`)
     setError('')
+    setEmailError('')
     try {
       const { data } = await paymentAPI.createCheckout({
         provider,
         sessionId,
         cvId: cv.id,
-        cvTitle: cv.title,
+        cvTitle: cv.title || 'Untitled CV',
         unlockType,
+        customerEmail: customerEmail.trim(),
         redirectUrl: `${window.location.origin}/cv/${cv.id}?payment=success`,
       })
       updateCVPayment(cv.id, { lastCheckoutAt: new Date().toISOString() })
@@ -137,7 +154,8 @@ export default function ExportMenu({ cv, onClose }) {
     if (!downloadUnlocked) return
     setLoading('json')
     const json = JSON.stringify({ cv }, null, 2)
-    downloadJSON(json, `${cv.title.replace(/\s+/g, '-').toLowerCase()}.json`)
+    const filename = `${(cv.title || 'cv').replace(/\s+/g, '-').toLowerCase()}.json`
+    downloadJSON(json, filename)
     markCVDownloaded(cv.id)
     setTimeout(() => setLoading(null), 600)
   }
@@ -159,7 +177,7 @@ export default function ExportMenu({ cv, onClose }) {
 
         {!downloadUnlocked && (
           <div className="mb-4 rounded-lg border border-amber-500/25 bg-amber-500/10 p-3">
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-3 mb-3">
               <ShieldCheck size={18} className="mt-0.5 text-amber-300" />
               <div>
                 <p className="text-sm font-semibold text-obsidian-100">Unlock this CV to download</p>
@@ -168,6 +186,29 @@ export default function ExportMenu({ cv, onClose }) {
                 </p>
               </div>
             </div>
+
+            <div className="mb-3 space-y-2">
+              <label className="text-xs font-semibold text-obsidian-200 block">
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={customerEmail}
+                onChange={(e) => {
+                  setCustomerEmail(e.target.value)
+                  setEmailError('')
+                }}
+                placeholder="your@email.com"
+                disabled={loading?.startsWith?.('pay')}
+                className={`w-full px-3 py-2 rounded-lg bg-obsidian-800 border text-sm text-obsidian-100 placeholder:text-obsidian-500 outline-none transition-colors ${
+                  emailError
+                    ? 'border-red-500/50 focus:border-red-500'
+                    : 'border-obsidian-700 focus:border-amber-500/50'
+                }`}
+              />
+              {emailError && <p className="text-xs text-red-400">{emailError}</p>}
+            </div>
+
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button
                 onClick={() => startCheckout('paystack', 'download')}
