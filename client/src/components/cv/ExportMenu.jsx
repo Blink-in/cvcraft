@@ -11,8 +11,7 @@ export default function ExportMenu({ cv, onClose }) {
   const [adOpen, setAdOpen] = useState(false)
   const [adSeconds, setAdSeconds] = useState(0)
   const [adAvailable, setAdAvailable] = useState(false)
-  const [adConfigCountdown, setAdConfigCountdown] = useState(60)
-  const [customerEmail, setCustomerEmail] = useState('')
+  const [customerEmail, setCustomerEmail] = useState(cv?.sections?.personal?.data?.email || '')
   const [emailError, setEmailError] = useState('')
   const sessionId = useStore(s => s.sessionId)
   const { updateCVPayment, markCVDownloaded, unlockCVAccess } = useStore()
@@ -22,20 +21,6 @@ export default function ExportMenu({ cv, onClose }) {
   useEffect(() => {
     setAdAvailable(Boolean(window?.CVCraftRewardedAdAvailable))
   }, [])
-
-  useEffect(() => {
-    if (adAvailable) return
-    let remaining = 60
-    setAdConfigCountdown(remaining)
-    const timer = window.setInterval(() => {
-      remaining -= 1
-      setAdConfigCountdown(remaining)
-      if (remaining <= 0) {
-        window.clearInterval(timer)
-      }
-    }, 1000)
-    return () => window.clearInterval(timer)
-  }, [adAvailable])
 
   const refreshEntitlement = async () => {
     setLoading('refresh')
@@ -238,7 +223,7 @@ export default function ExportMenu({ cv, onClose }) {
             <p className="mt-2 text-[11px] text-obsidian-400">
               {adAvailable
                 ? 'Rewarded ad unlocks are enabled.'
-                : `Rewarded ads are not configured yet.${adConfigCountdown > 0 ? ` Available in ${adConfigCountdown}s.` : ' Coming soon.'}`}
+                : 'Rewarded ads are not configured yet. Coming soon.'}
             </p>
             <button
               onClick={refreshEntitlement}

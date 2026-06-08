@@ -1,28 +1,6 @@
 import { useNavigate } from 'react-router-dom'
-import { useStore } from '../store/index.js'
-import { Plus, FileText, Copy, Trash2, Clock, Download, Upload, ArrowLeft, Mail, Lock, ShieldCheck } from 'lucide-react'
-import { formatDistanceToNow } from '../utils/date.js'
-import { downloadJSON, importJSON } from '../utils/io.js'
-import { useRef } from 'react'
-
-function EmptyState({ onAction, label, icon: Icon }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16 border border-dashed border-obsidian-700 rounded-xl text-center">
-      <div className="w-12 h-12 rounded-full bg-obsidian-800 flex items-center justify-center mb-4">
-        <Icon size={22} className="text-obsidian-500" />
-      </div>
-      <p className="text-obsidian-400 mb-4 text-sm">No documents yet</p>
-      <button onClick={onAction} className="btn-primary py-2 px-5 text-sm">
-        <Plus size={15} />
-        {label}
-      </button>
-    </div>
-  )
-}
-
-export default function Dashboard() {
-  const navigate = useNavigate()
-  const fileRef = useRef()
+const navigate = useNavigate()
+const fileRef = useRef()
   const {
     cvs, coverLetters,
     createCV, duplicateCV, deleteCV,
@@ -81,6 +59,10 @@ export default function Dashboard() {
             Import
           </button>
           <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
+          <button onClick={() => navigate('/report-issue')} className="btn-ghost py-2 px-3 text-xs text-red-400 hover:text-red-300 ml-2">
+            <Bug size={13} className="inline mr-1" />
+            Issue
+          </button>
         </div>
       </header>
 

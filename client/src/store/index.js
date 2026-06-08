@@ -56,7 +56,7 @@ export const createEmptyCV = (overrides = {}) => ({
   sectionOrder: ['personal', 'experience', 'education', 'skills', 'projects', 'certifications'],
   monetization: {
     downloadUnlocked: false,
-    editUnlocked: true,
+    editUnlocked: false,
     downloadedAt: null,
     paidAt: null,
     unlockedBy: null,
@@ -117,13 +117,14 @@ export const useStore = create(
       duplicateCV: (id) => {
         const cv = get().cvs.find(c => c.id === id)
         if (!cv) return
+        const { monetization: _ignored, ...rest } = cv
         const duplicate = {
-          ...cv,
+          ...rest,
           id: uuidv4(),
           title: `${cv.title} (Copy)`,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-          monetization: createEmptyCV().monetization,
+          monetization: { ...(cv.monetization || {}) },
         }
         set(state => ({ cvs: [...state.cvs, duplicate] }))
       },
