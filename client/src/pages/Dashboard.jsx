@@ -131,12 +131,6 @@ export default function Dashboard() {
                             Preview only
                           </span>
                         )}
-                        {cv.monetization?.downloadedAt && !cv.monetization?.editUnlocked && (
-                          <span className="inline-flex items-center gap-1 rounded border border-obsidian-700 bg-obsidian-800 px-2 py-0.5 text-[10px] font-medium text-obsidian-300">
-                            <Lock size={10} />
-                            Edit locked
-                          </span>
-                        )}
                       </div>
                     </div>
                   </div>
