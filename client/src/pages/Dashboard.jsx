@@ -1,8 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/index.js'
-import { Plus, FileText, Copy, Trash2, Clock, Download, Upload, ArrowLeft, Bug, ShieldCheck } from 'lucide-react'
-import { formatDistanceToNow } from '../utils/date.js'
-import { downloadJSON, importJSON } from '../utils/io.js'
+import { Plus, FileText, Copy, Trash2, Clock, Download, Upload, ArrowLeft, Bug, ShieldCheck, BookOpen, FileText as FileTextIcon } from 'lucide-react'
 
 function EmptyState({ onAction, label, icon: Icon }) {
   return (
@@ -78,100 +76,170 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-10">
-        {/* ── Page title ── */}
-        <div className="mb-10">
-          <h1 className="font-display text-4xl font-bold mb-2">Dashboard</h1>
-          <p className="text-obsidian-400 text-sm">All your documents, saved right in your browser.</p>
-        </div>
+       <main className="max-w-5xl mx-auto px-6 py-10">
+         {/* ── Page title ── */}
+         <div className="mb-10">
+           <h1 className="font-display text-4xl font-bold mb-2">Dashboard</h1>
+           <p className="text-obsidian-400 text-sm">All your documents, saved right in your browser.</p>
+         </div>
 
-        {/* ── CVs ── */}
-        <section className="mb-12">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-3">
-              <FileText size={18} className="text-amber-400" />
-              <h2 className="font-semibold text-lg text-obsidian-100">CVs</h2>
-              <span className="text-xs bg-obsidian-800 border border-obsidian-700 rounded-full px-2 py-0.5 text-obsidian-400">
-                {cvs.length}
-              </span>
-            </div>
-            <button onClick={handleNewCV} className="btn-primary py-2 px-4 text-sm">
-              <Plus size={15} />
-              New CV
-            </button>
-          </div>
+         {/* ── Getting Started Guide ── */}
+         {cvs.length === 0 && (
+           <div className="mb-12 card p-6 md:p-8">
+             <div className="flex items-center gap-3 mb-5">
+               <div className="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                 <BookOpen size={20} className="text-amber-400" />
+               </div>
+               <h2 className="font-display text-xl font-bold text-obsidian-100">Getting Started with CVCraft</h2>
+             </div>
+             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+               <div className="p-4 rounded-xl bg-obsidian-800/50 border border-obsidian-700">
+                 <div className="text-amber-400 font-display text-lg font-bold mb-1">1</div>
+                 <h3 className="font-semibold text-obsidian-100 text-sm mb-1">Create a CV</h3>
+                 <p className="text-xs text-obsidian-400 leading-relaxed">Click "New CV" above to start building. Choose from 5 professionally designed templates that pass ATS systems.</p>
+               </div>
+               <div className="p-4 rounded-xl bg-obsidian-800/50 border border-obsidian-700">
+                 <div className="text-amber-400 font-display text-lg font-bold mb-1">2</div>
+                 <h3 className="font-semibold text-obsidian-100 text-sm mb-1">Fill in Your Details</h3>
+                 <p className="text-xs text-obsidian-400 leading-relaxed">Add your experience, education, skills, and certifications. Use action verbs and quantify achievements for the best results.</p>
+               </div>
+               <div className="p-4 rounded-xl bg-obsidian-800/50 border border-obsidian-700">
+                 <div className="text-amber-400 font-display text-lg font-bold mb-1">3</div>
+                 <h3 className="font-semibold text-obsidian-100 text-sm mb-1">Customize & Export</h3>
+                 <p className="text-xs text-obsidian-400 leading-relaxed">Pick colors and fonts, write a cover letter with AI, then export as a high-fidelity PDF ready to send.</p>
+               </div>
+             </div>
+           </div>
+         )}
 
-          {cvs.length === 0 ? (
-            <EmptyState onAction={handleNewCV} label="Create Your First CV" icon={FileText} />
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {cvs.map(cv => (
-                <div
-                  key={cv.id}
-                  className="group card p-5 hover:border-obsidian-600 transition-all duration-200 cursor-pointer hover:-translate-y-0.5"
-                  onClick={() => navigate(`/cv/${cv.id}`)}
-                >
-                  {/* Template color stripe */}
-                  <div className="h-1.5 w-full rounded-full mb-4 opacity-70" style={{ background: TEMPLATE_COLORS[cv.template] || '#c9a84c' }} />
+         {/* ── Tips Section ── */}
+         <div className="mb-12 card p-6 md:p-8">
+           <h2 className="font-display text-xl font-bold text-obsidian-100 mb-4">CV Writing Quick Tips</h2>
+           <div className="grid sm:grid-cols-2 gap-4">
+             <div className="flex items-start gap-3">
+               <FileText size={16} className="text-amber-400 mt-0.5 flex-shrink-0" />
+               <div>
+                 <h3 className="font-semibold text-obsidian-100 text-sm">Keep it to one page</h3>
+                 <p className="text-xs text-obsidian-400 leading-relaxed">Recruiters spend 7 seconds on a first pass. One page forces focus.</p>
+               </div>
+             </div>
+             <div className="flex items-start gap-3">
+               <FileText size={16} className="text-amber-400 mt-0.5 flex-shrink-0" />
+               <div>
+                 <h3 className="font-semibold text-obsidian-100 text-sm">Use action verbs</h3>
+                 <p className="text-xs text-obsidian-400 leading-relaxed">Led, Built, Increased, Optimized. Not "Responsible for."</p>
+               </div>
+             </div>
+             <div className="flex items-start gap-3">
+               <FileText size={16} className="text-amber-400 mt-0.5 flex-shrink-0" />
+               <div>
+                 <h3 className="font-semibold text-obsidian-100 text-sm">Quantify impact</h3>
+                 <p className="text-xs text-obsidian-400 leading-relaxed">Replace vague claims with numbers: "cut load time by 40%."</p>
+               </div>
+             </div>
+             <div className="flex items-start gap-3">
+               <FileText size={16} className="text-amber-400 mt-0.5 flex-shrink-0" />
+               <div>
+                 <h3 className="font-semibold text-obsidian-100 text-sm">Tailor for ATS</h3>
+                 <p className="text-xs text-obsidian-400 leading-relaxed">Mirror keywords from the job description. Avoid tables and text boxes that parsers can't read.</p>
+               </div>
+             </div>
+           </div>
+         </div>
 
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-obsidian-100 truncate mb-1">{cv.title}</h3>
-                      <span className="inline-block text-xs px-2 py-0.5 rounded bg-obsidian-800 text-obsidian-400 border border-obsidian-700 capitalize">
-                        {cv.template} template
-                      </span>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {cv.monetization?.downloadUnlocked ? (
-                          <span className="inline-flex items-center gap-1 rounded border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
-                            <ShieldCheck size={10} />
-                            Download paid
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 rounded border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-300">
-                            Preview only
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+         {/* ── CVs ── */}
+         <section className="mb-12">
+           <div className="flex items-center justify-between mb-5">
+             <div className="flex items-center gap-3">
+               <FileText size={18} className="text-amber-400" />
+               <h2 className="font-semibold text-lg text-obsidian-100">CVs</h2>
+               <span className="text-xs bg-obsidian-800 border border-obsidian-700 rounded-full px-2 py-0.5 text-obsidian-400">
+                 {cvs.length}
+               </span>
+             </div>
+             <button onClick={handleNewCV} className="btn-primary py-2 px-4 text-sm">
+               <Plus size={15} />
+               New CV
+             </button>
+           </div>
 
-                  <div className="flex items-center gap-1.5 text-xs text-obsidian-600 mb-4">
-                    <Clock size={11} />
-                    {formatDistanceToNow(cv.updatedAt)}
-                  </div>
+           {cvs.length === 0 ? (
+             <EmptyState onAction={handleNewCV} label="Create Your First CV" icon={FileText} />
+           ) : (
+             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+               {cvs.map(cv => (
+                 <div
+                   key={cv.id}
+                   className="group card p-5 hover:border-obsidian-600 transition-all duration-200 cursor-pointer hover:-translate-y-0.5"
+                   onClick={() => navigate(`/cv/${cv.id}`)}
+                 >
+                   {/* Template color stripe */}
+                   <div className="h-1.5 w-full rounded-full mb-4 opacity-70" style={{ background: TEMPLATE_COLORS[cv.template] || '#c9a84c' }} />
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
-                    <button
-                      onClick={() => navigate(`/cv/${cv.id}`)}
-                      className="flex-1 btn-secondary py-1.5 text-xs justify-center"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => duplicateCV(cv.id)}
-                      className="btn-ghost py-1.5 px-2"
-                      title="Duplicate"
-                    >
-                      <Copy size={13} />
-                    </button>
-                    <button
-                      onClick={() => { if (confirm('Delete this CV?')) deleteCV(cv.id) }}
-                      className="btn-danger py-1.5 px-2"
-                      title="Delete"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      </main>
-    </div>
-  )
-}
+                   <div className="flex items-start justify-between mb-3">
+                     <div className="flex-1 min-w-0">
+                       <h3 className="font-semibold text-obsidian-100 truncate mb-1">{cv.title}</h3>
+                       <span className="inline-block text-xs px-2 py-0.5 rounded bg-obsidian-800 text-obsidian-400 border border-obsidian-700 capitalize">
+                         {cv.template} template
+                       </span>
+                       <div className="mt-2 flex-wrap gap-1.5 flex">
+                         {cv.monetization?.downloadUnlocked ? (
+                           <span className="inline-flex items-center gap-1 rounded border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
+                             <ShieldCheck size={10} />
+                             Download paid
+                           </span>
+                         ) : (
+                           <span className="inline-flex items-center gap-1 rounded border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-300">
+                             Preview only
+                           </span>
+                         )}
+                       </div>
+                     </div>
+                   </div>
+
+                   <div className="flex items-center gap-1.5 text-xs text-obsidian-600 mb-4">
+                     <Clock size={11} />
+                     {formatDistanceToNow(cv.updatedAt)}
+                   </div>
+
+                   {/* Actions */}
+                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                     <button
+                       onClick={() => navigate(`/cv/${cv.id}`)}
+                       className="flex-1 btn-secondary py-1.5 text-xs justify-center"
+                     >
+                       Edit
+                     </button>
+                     <button
+                       onClick={() => duplicateCV(cv.id)}
+                       className="btn-ghost py-1.5 px-2"
+                       title="Duplicate"
+                     >
+                       <Copy size={13} />
+                     </button>
+                     <button
+                       onClick={() => { if (confirm('Delete this CV?')) deleteCV(cv.id) }}
+                       className="btn-danger py-1.5 px-2"
+                       title="Delete"
+                     >
+                       <Trash2 size={13} />
+                     </button>
+                   </div>
+                 </div>
+               ))}
+             </div>
+           )}
+         </section>
+
+         <div className="text-center">
+           <button onClick={() => navigate('/cv-writing-guide')} className="btn-secondary text-sm py-2 px-6">
+             Read CV Writing Guide
+           </button>
+         </div>
+       </main>
+     </div>
+   )
+ }
 
 const TEMPLATE_COLORS = {
   classic: '#c9a84c',
