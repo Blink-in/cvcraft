@@ -5,12 +5,24 @@ const PaymentAttempt = require('./_lib/models/PaymentAttempt')
 
 const PRICE_CENTS = Number(process.env.PAYMENT_PRICE_CENTS || process.env.LEMON_SQUEEZY_PRICE_CENTS || 250)
 const PRICE_AMOUNT = Number((PRICE_CENTS / 100).toFixed(2))
-const DEFAULT_CURRENCY = String(process.env.PAYMENT_CURRENCY || process.env.LEMON_SQUEEZY_CURRENCY || 'USD').toUpperCase()
+
+// Provider-specific currencies for better compatibility
+const PROVIDER_CURRENCIES = {
+  paystack: String(process.env.PAYSTACK_CURRENCY || 'NGN').toUpperCase(),
+  flutterwave: String(process.env.FLUTTERWAVE_CURRENCY || 'USD').toUpperCase(),
+  lemon_squeezy: String(process.env.LEMON_SQUEEZY_CURRENCY || 'USD').toUpperCase(),
+}
+const DEFAULT_CURRENCY = String(process.env.PAYMENT_CURRENCY || PROVIDER_CURRENCIES.flutterwave).toUpperCase()
+
 const CHECKOUT_TTL_MINUTES = Number(process.env.PAYMENT_CHECKOUT_TTL_MINUTES || 30)
 const ENABLED_PROVIDERS = String(process.env.PAYMENT_PROVIDERS || 'paystack,flutterwave')
   .split(',')
   .map(provider => normalizeProvider(provider))
   .filter(Boolean)
+
+function getCurrencyForProvider(provider) {
+  return PROVIDER_CURRENCIES[provider] || DEFAULT_CURRENCY
+}
 
 async function handler(req, res) {
   const action = req.query.action
@@ -132,6 +144,7 @@ async function createPaystackCheckout({ sessionId, cvId, cvTitle, unlockType, re
   }
 
   const reference = createReference('ps')
+  const currency = getCurrencyForProvider('paystack')
   const attempt = await createPaymentAttempt({
     provider: 'paystack',
     reference,
@@ -139,6 +152,7 @@ async function createPaystackCheckout({ sessionId, cvId, cvTitle, unlockType, re
     cvId,
     unlockType,
     customerEmail,
+    currency,
   })
 
   const response = await fetch('https://api.paystack.co/transaction/initialize', {
@@ -150,7 +164,7 @@ async function createPaystackCheckout({ sessionId, cvId, cvTitle, unlockType, re
     body: JSON.stringify({
       email: normalizeEmail(customerEmail, sessionId),
       amount: PRICE_CENTS,
-      currency: DEFAULT_CURRENCY,
+      currency,
       reference,
       callback_url: addPaymentParams(safeReturnUrl(redirectUrl, origin, cvId), 'paystack'),
       metadata: {
@@ -183,6 +197,7 @@ async function createFlutterwaveCheckout({ sessionId, cvId, cvTitle, unlockType,
   }
 
   const reference = createReference('flw')
+  const currency = getCurrencyForProvider('flutterwave')
   await createPaymentAttempt({
     provider: 'flutterwave',
     reference,
@@ -190,6 +205,7 @@ async function createFlutterwaveCheckout({ sessionId, cvId, cvTitle, unlockType,
     cvId,
     unlockType,
     customerEmail,
+    currency,
   })
 
   const response = await fetch('https://api.flutterwave.com/v3/payments', {
@@ -201,7 +217,7 @@ async function createFlutterwaveCheckout({ sessionId, cvId, cvTitle, unlockType,
     body: JSON.stringify({
       tx_ref: reference,
       amount: PRICE_AMOUNT,
-      currency: DEFAULT_CURRENCY,
+      currency,
       redirect_url: addPaymentParams(safeReturnUrl(redirectUrl, origin, cvId), 'flutterwave'),
       customer: {
         email: normalizeEmail(customerEmail, sessionId),
@@ -505,7 +521,7 @@ function fromFlutterwavePayment(data) {
   }
 }
 
-async function createPaymentAttempt({ provider, reference, sessionId, cvId, unlockType, customerEmail }) {
+async function createPaymentAttempt({ provider, reference, sessionId, cvId, unlockType, customerEmail, currency }) {
   return PaymentAttempt.create({
     provider,
     reference,
@@ -513,7 +529,7 @@ async function createPaymentAttempt({ provider, reference, sessionId, cvId, unlo
     cvId,
     unlockType,
     amount: PRICE_CENTS,
-    currency: DEFAULT_CURRENCY,
+    currency: currency || getCurrencyForProvider(provider),
     customerEmail: customerEmail || null,
     expiresAt: new Date(Date.now() + CHECKOUT_TTL_MINUTES * 60 * 1000),
   })
