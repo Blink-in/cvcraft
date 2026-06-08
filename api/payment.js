@@ -10,8 +10,8 @@ const PRICE_AMOUNT = Number((PRICE_CENTS / 100).toFixed(2))
 // Provider-specific currencies for better compatibility
 const PROVIDER_CURRENCIES = {
   paystack: String(process.env.PAYSTACK_CURRENCY || process.env.PAYMENT_CURRENCY || 'NGN').toUpperCase(),
-  flutterwave: String(process.env.FLUTTERWAVE_CURRENCY || process.env.PAYMENT_CURRENCY || 'USD').toUpperCase(),
-  lemon_squeezy: String(process.env.LEMON_SQUEEZY_CURRENCY || process.env.PAYMENT_CURRENCY || 'USD').toUpperCase(),
+  flutterwave: String(process.env.FLUTTERWAVE_CURRENCY || 'USD').toUpperCase(),
+  lemon_squeezy: String(process.env.LEMON_SQUEEZY_CURRENCY || 'USD').toUpperCase(),
 }
 const DEFAULT_CURRENCY = String(process.env.PAYMENT_CURRENCY || PROVIDER_CURRENCIES.flutterwave).toUpperCase()
 
