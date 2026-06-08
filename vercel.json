@@ -5,7 +5,7 @@
   "framework": "vite",
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/(google[a-z0-9]+\\.html|BingSiteAuth\\.xml|.*\\.txt|.*\\.xml)", "dest": "/$1" },
+    { "src": "/(google[a-z0-9]+\\.html|BingSiteAuth\\.xml|.*\\.txt|.*\\.xml|sitemap\\.xml|robots\\.txt)", "dest": "/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
