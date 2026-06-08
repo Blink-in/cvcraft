@@ -162,66 +162,6 @@ const fileRef = useRef()
             </div>
           )}
         </section>
-
-        {/* ── Cover Letters ── */}
-        {/* TEMPORARILY DISABLED - TO BE FIXED LATER
-        <section>
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-3">
-              <Mail size={18} className="text-amber-400" />
-              <h2 className="font-semibold text-lg text-obsidian-100">Cover Letters</h2>
-              <span className="text-xs bg-obsidian-800 border border-obsidian-700 rounded-full px-2 py-0.5 text-obsidian-400">
-                {coverLetters.length}
-              </span>
-            </div>
-            <button onClick={handleNewCL} className="btn-primary py-2 px-4 text-sm opacity-50 cursor-not-allowed" disabled>
-              <Plus size={15} />
-              New Cover Letter
-            </button>
-          </div>
-
-          {coverLetters.length === 0 ? (
-            <EmptyState onAction={() => {}} label="Create Your First Cover Letter" icon={Mail} />
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {coverLetters.map(cl => (
-                <div
-                  key={cl.id}
-                  className="group card p-5 hover:border-obsidian-600 transition-all duration-200 cursor-not-allowed opacity-50"
-                >
-                  <div className="h-1.5 w-full rounded-full mb-4 opacity-70 bg-amber-500" />
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-obsidian-100 truncate mb-1">{cl.title}</h3>
-                      {cl.company && (
-                        <p className="text-xs text-obsidian-400 truncate">{cl.jobTitle} @ {cl.company}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-xs text-obsidian-600 mb-4">
-                    <Clock size={11} />
-                    {formatDistanceToNow(cl.updatedAt)}
-                  </div>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
-                    <button
-                      className="flex-1 btn-secondary py-1.5 text-xs justify-center opacity-50 cursor-not-allowed"
-                      disabled
-                    >
-                      Edit
-                    </button>
-                    <button className="btn-ghost py-1.5 px-2 opacity-50 cursor-not-allowed" disabled>
-                      <Copy size={13} />
-                    </button>
-                    <button className="btn-danger py-1.5 px-2 opacity-50 cursor-not-allowed" disabled>
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-        END TEMPORARILY DISABLED */}
       </main>
     </div>
   )
