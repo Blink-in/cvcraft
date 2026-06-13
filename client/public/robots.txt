@@ -1,4 +1,16 @@
+
+
+
 User-agent: *
 Allow: /
 
-Sitemap: https://getcvcraft.com/sitemap.xml
+# Block dynamic editor pages — no SEO value, unique per user
+Disallow: /cv/
+Disallow: /cover-letter/
+Disallow: /report-issue
+
+# Block API routes
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://www.getcvcraft.com/sitemap.xml
