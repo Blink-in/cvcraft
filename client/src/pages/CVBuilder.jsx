@@ -1,4 +1,4 @@
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams, Navigate } from 'react-router-dom'
 import { useStore } from '../store/index.js'
 import { useEffect, useState, useCallback } from 'react'
 import { ArrowLeft, Eye, EyeOff, Layout, Download, Settings } from 'lucide-react'
@@ -34,9 +34,8 @@ export default function CVBuilder() {
   }, [])
 
   useEffect(() => {
-    if (!cv) { navigate('/dashboard'); return }
-    setActiveCV(id)
-  }, [id])
+    if (cv) setActiveCV(id)
+  }, [id, cv, setActiveCV])
 
   useEffect(() => {
     if (!cv || cv.monetization?.downloadUnlocked) return
@@ -90,7 +89,10 @@ export default function CVBuilder() {
     updateCV(id, c => ({ ...c, title: e.target.value }))
   }, [id, updateCV])
 
-  if (!cv) return null
+  if (!cv) {
+    navigate('/dashboard', { replace: true })
+    return <Navigate to="/dashboard" replace />
+  }
 
   return (
     <div className="flex flex-col h-screen bg-obsidian-950 font-body overflow-hidden">
