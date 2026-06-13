@@ -90,7 +90,6 @@ export default function CVBuilder() {
   }, [id, updateCV])
 
   if (!cv) {
-    navigate('/dashboard', { replace: true })
     return <Navigate to="/dashboard" replace />
   }
 

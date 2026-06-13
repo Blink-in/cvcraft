@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Navigate } from 'react-router-dom'
 import { useStore } from '../store/index.js'
 import { useEffect, useState, useRef } from 'react'
 import { ArrowLeft, Sparkles, Download, Eye, EyeOff, Copy, Check } from 'lucide-react'
@@ -29,10 +29,12 @@ export default function CoverLetterBuilder() {
   const previewRef = useRef()
 
   useEffect(() => {
-    if (!cl) navigate('/dashboard')
-  }, [id])
+    if (!cl) navigate('/dashboard', { replace: true })
+  }, [cl, id, navigate])
 
-  if (!cl) return null
+  if (!cl) {
+    return <Navigate to="/dashboard" replace />
+  }
 
   const update = (field, value) => updateCoverLetter(id, field, value)
 
