@@ -66,7 +66,7 @@ async function handler(req, res) {
         })
       }
 
-      const reusableAttempt = await findReusableAttempt({ sessionId, cvId, unlockType: normalizedUnlockType })
+      const reusableAttempt = await findReusableAttempt({ provider: normalizedProvider, sessionId, cvId, unlockType: normalizedUnlockType })
       if (reusableAttempt?.checkoutUrl) {
         return res.status(200).json({ checkoutUrl: reusableAttempt.checkoutUrl, provider: reusableAttempt.provider, reference: reusableAttempt.reference })
       }
@@ -538,8 +538,9 @@ async function createPaymentAttempt({ provider, reference, sessionId, cvId, unlo
   })
 }
 
-async function findReusableAttempt({ sessionId, cvId, unlockType }) {
+async function findReusableAttempt({ provider, sessionId, cvId, unlockType }) {
   return PaymentAttempt.findOne({
+    provider,
     sessionId,
     cvId,
     unlockType,

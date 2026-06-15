@@ -9,6 +9,10 @@ const TEMPLATES = [
   { id: 'creative', name: 'Creative', desc: 'Purple diagonal, bold', colors: ['#1a0a2e', '#a855f7', '#faf5ff'] },
   { id: 'elegant', name: 'Elegant', desc: 'Sophisticated serif, luxurious feel', colors: ['#2d2d2d', '#8b7355', '#fdf6e3'] },
   { id: 'professional', name: 'Professional', desc: 'Clean corporate, trusted standard', colors: ['#1565c0', '#42a5f5', '#ffffff'] },
+  { id: 'cleanFlow', name: 'Clean Flow', desc: 'Simple one-column ATS flow', colors: ['#ffffff', '#2d3338', '#d7d7d7'] },
+  { id: 'simpleLinear', name: 'Simple Linear', desc: 'Compact line-led classic', colors: ['#ffffff', '#111111', '#d4d4d4'] },
+  { id: 'timelessSleek', name: 'Timeless Sleek', desc: 'Taupe header, vertical rhythm', colors: ['#b7a29b', '#ffffff', '#111111'] },
+  { id: 'modernOverlay', name: 'Modern Overlay', desc: 'Framed two-column editorial', colors: ['#546874', '#ffffff', '#333333'] },
 ]
 
 export default function TemplateSelector({ cvId, cv, onClose }) {

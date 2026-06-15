@@ -39,7 +39,7 @@ export default function ProfessionalTemplate({ cv }) {
         ))}
       </div>
 
-      <div style={{ padding: '24px 48px' }}>
+      <div style={{ padding: '24px 48px', paddingBottom: '48px' }}>
         {sections.personal?.visible !== false && p.summary && (
           <>
             <SectionTitle>Professional Summary</SectionTitle>
@@ -84,11 +84,11 @@ export default function ProfessionalTemplate({ cv }) {
             )}
           </div>
           <div>
-            {sections.skills?.visible !== false && (
+            {sections.skills?.visible !== false && sections.skills.data.technical?.length > 0 && (
               <>
                 <SectionTitle>Technical Skills</SectionTitle>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                  {(sections.skills.data.technical || []).map(s => (
+                  {sections.skills.data.technical.map(s => (
                     <span key={s} style={{ fontSize: '10.5px', padding: '3px 10px', background: '#f8f9fa', border: `1px solid ${accent}40`, borderRadius: '4px', color: '#334155' }}>{s}</span>
                   ))}
                 </div>
@@ -111,30 +111,33 @@ export default function ProfessionalTemplate({ cv }) {
           </div>
         </div>
 
-        <div style={{ marginTop: '24px' }}>
-          {sections.skills?.visible !== false && (
-            <>
-              <SectionTitle>Additional Skills</SectionTitle>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '10px' }}>
-                  {Object.entries(sections.skills.data).filter(([key]) => key !== 'technical').map(([cat, skills]) => (
-                    skills?.length > 0 && (
-                      <div key={cat} style={{ background: '#f8f9fa', padding: '12px', borderRadius: '6px' }}>
-                        <p style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', color: accent, marginBottom: '8px' }}>
-                          {cat === 'soft' ? 'Soft Skills' : cat === 'languages' ? 'Languages' : cat}
-                        </p>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                          {skills.map(s => (
-                            <span key={s} style={{ fontSize: '10px', background: '#e3f2fd', padding: '4px 8px', borderRadius: '12px' }}>{s}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )
-                  ))}
+        {sections.skills?.visible !== false && (
+          <div style={{ marginTop: '24px' }}>
+            <SectionTitle>Additional Skills</SectionTitle>
+            <div style={{ display: 'flex', gap: '16px' }}>
+              {sections.skills.data.soft?.length > 0 && (
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', color: accent, marginBottom: '8px' }}>Soft Skills</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {sections.skills.data.soft.map(s => (
+                      <span key={s} style={{ fontSize: '10px', background: '#e3f2fd', padding: '4px 8px', borderRadius: '12px' }}>{s}</span>
+                    ))}
+                  </div>
                 </div>
-              </>
-            )}
+              )}
+              {sections.skills.data.languages?.length > 0 && (
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.5px', textTransform: 'uppercase', color: accent, marginBottom: '8px' }}>Languages</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {sections.skills.data.languages.map(s => (
+                      <span key={s} style={{ fontSize: '10px', background: '#e3f2fd', padding: '4px 8px', borderRadius: '12px' }}>{s}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {sections.projects?.visible !== false && sections.projects?.data?.length > 0 && (
           <>
@@ -158,7 +161,8 @@ export default function ProfessionalTemplate({ cv }) {
             ))}
           </>
         )}
+        </div>
       </div>
-    
-  )
-}
+
+    )
+  }

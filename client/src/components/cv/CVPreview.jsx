@@ -1,3 +1,5 @@
+import { useLayoutEffect, useRef, useState } from 'react'
+
 // Template renderers
 import ClassicTemplate from './templates/ClassicTemplate.jsx'
 import ModernTemplate from './templates/ModernTemplate.jsx'
@@ -6,6 +8,12 @@ import ExecutiveTemplate from './templates/ExecutiveTemplate.jsx'
 import CreativeTemplate from './templates/CreativeTemplate.jsx'
 import ElegantTemplate from './templates/ElegantTemplate.jsx'
 import ProfessionalTemplate from './templates/ProfessionalTemplate.jsx'
+import {
+  CleanFlowTemplate,
+  SimpleLinearTemplate,
+  TimelessSleekTemplate,
+  ModernOverlayTemplate,
+} from './templates/ReferenceTemplates.jsx'
 
 const TEMPLATES = {
   classic: ClassicTemplate,
@@ -15,11 +23,35 @@ const TEMPLATES = {
   creative: CreativeTemplate,
   elegant: ElegantTemplate,
   professional: ProfessionalTemplate,
+  cleanFlow: CleanFlowTemplate,
+  simpleLinear: SimpleLinearTemplate,
+  timelessSleek: TimelessSleekTemplate,
+  modernOverlay: ModernOverlayTemplate,
 }
+
+const A4_PAGE_HEIGHT = 1122
+const PAGED_TEMPLATES = new Set(['cleanFlow', 'simpleLinear', 'timelessSleek', 'modernOverlay'])
 
 export default function CVPreview({ cv, forExport = false }) {
   const Template = TEMPLATES[cv.template] || ClassicTemplate
   const protectedPreview = !forExport && !cv.monetization?.downloadUnlocked
+  const usesPagedTemplate = PAGED_TEMPLATES.has(cv.template)
+  const contentRef = useRef(null)
+  const [pageCount, setPageCount] = useState(1)
+
+  useLayoutEffect(() => {
+    const node = contentRef.current
+    if (!node || forExport || usesPagedTemplate) return undefined
+
+    const updatePageCount = () => {
+      setPageCount(Math.max(1, Math.ceil(node.scrollHeight / A4_PAGE_HEIGHT)))
+    }
+
+    updatePageCount()
+    const observer = new ResizeObserver(updatePageCount)
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [cv, forExport, usesPagedTemplate])
 
   return (
     <div
@@ -32,9 +64,22 @@ export default function CVPreview({ cv, forExport = false }) {
         fontFamily: cv.customization?.fontFamily || 'DM Sans',
         fontSize: cv.customization?.fontSize === 'sm' ? '12px' : cv.customization?.fontSize === 'lg' ? '15px' : '13.5px',
       }}
-      className="relative overflow-hidden shadow-2xl"
+      className="cv-preview-pages relative shadow-2xl"
     >
-      <div className={protectedPreview ? 'select-none' : ''}>
+      {!forExport && !usesPagedTemplate && pageCount > 1 && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10">
+          {Array.from({ length: pageCount - 1 }, (_, index) => (
+            <div
+              key={index}
+              className="cv-page-boundary"
+              style={{ top: `${(index + 1) * A4_PAGE_HEIGHT}px` }}
+            >
+              <span>Page {index + 2}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      <div ref={contentRef} className={`cv-preview-content ${protectedPreview ? 'select-none' : ''}`}>
         <Template cv={cv} />
       </div>
       {protectedPreview && <ProtectedPreviewOverlay />}

@@ -134,9 +134,9 @@ export default function CVBuilder() {
             <Settings size={13} />
             <span className="hidden md:inline">Customize</span>
           </button>
-          <button onClick={() => setPreviewMode(!previewMode)} className={`btn-ghost py-1.5 px-3 text-xs ${previewMode ? 'text-amber-400 bg-amber-500/10' : ''}`}>
+          <button onClick={() => setPreviewMode(!previewMode)} className={`py-1.5 px-3 text-xs ${previewMode ? 'btn-primary' : 'btn-secondary'}`}>
             {previewMode ? <EyeOff size={13} /> : <Eye size={13} />}
-            <span className="hidden md:inline">{previewMode ? 'Edit' : 'Preview'}</span>
+            <span>{previewMode ? 'Edit' : 'Preview'}</span>
           </button>
           <button onClick={() => setShowExport(!showExport)} className="btn-primary py-1.5 px-3 text-xs relative">
             <Download size={13} />
@@ -158,10 +158,12 @@ export default function CVBuilder() {
 
       {/* ── Main layout ── */}
       <div className="flex flex-1 overflow-hidden">
-        <EditorSidebar cv={cv} cvId={id} activeSection={activeSection} setActiveSection={setActiveSection} />
+        <div className={`${previewMode ? 'hidden md:block' : 'block'} h-full`}>
+          <EditorSidebar cv={cv} cvId={id} activeSection={activeSection} setActiveSection={setActiveSection} />
+        </div>
 
         {/* Preview pane */}
-        <div className={`flex-1 overflow-y-auto bg-obsidian-900/30 ${previewMode ? 'p-8' : 'p-4 md:p-8'}`}>
+        <div className={`${previewMode ? 'block' : 'hidden md:block'} flex-1 overflow-y-auto bg-obsidian-900/30 ${previewMode ? 'p-4 md:p-8' : 'p-4 md:p-8'}`}>
           <div className="flex justify-center">
             <CVPreview cv={cv} />
           </div>

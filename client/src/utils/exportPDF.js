@@ -22,6 +22,8 @@ export async function exportCVasPDF(cv) {
         <style>
           * { box-sizing: border-box; margin: 0; padding: 0; }
           body { background: white; }
+          #cv-preview-root { box-shadow: none !important; overflow: visible !important; width: 794px !important; }
+          .cv-page-boundary { display: none !important; }
           @page { size: A4; margin: 0; }
           @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
         </style>

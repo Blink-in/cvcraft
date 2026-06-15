@@ -159,7 +159,7 @@ export default function ExportMenu({ cv, onClose }) {
                 </div>
 
                 {/* Watch ad button */}
-                <button
+                <button disabled 
                   onClick={() => setShowRewardedAd(true)}
                   className="w-full btn-ghost border border-obsidian-700 justify-center py-2.5 text-xs hover:border-emerald-500/40 hover:text-emerald-400 transition-colors"
                 >

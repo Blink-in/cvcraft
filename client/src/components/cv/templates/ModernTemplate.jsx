@@ -98,27 +98,49 @@ export default function ModernTemplate({ cv }) {
             </div>
           )}
 
-          {sections.skills?.visible !== false && (
-            <div style={{ marginTop: '16px' }}>
-              <SectionTitle>Skills</SectionTitle>
-              {Object.entries(sections.skills.data).map(([cat, skills]) =>
-                skills?.length > 0 ? (
-                  <div key={cat} style={{ marginBottom: '12px' }}>
-                    <p style={{ fontSize: '9px', fontWeight: '700', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '5px' }}>
-                      {cat === 'technical' ? 'Technical' : cat === 'soft' ? 'Soft Skills' : 'Languages'}
-                    </p>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                      {skills.map(s => (
-                        <span key={s} style={{ fontSize: '10.5px', padding: '3px 8px', background: `${accent}15`, border: `1px solid ${accent}30`, borderRadius: '4px', color: '#1e293b' }}>
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ) : null
-              )}
-            </div>
-          )}
+{sections.skills?.visible !== false && (
+             <div style={{ marginTop: '16px' }}>
+               <SectionTitle>Skills</SectionTitle>
+               <div style={{ display: 'flex', gap: '16px' }}>
+                 {sections.skills.data.technical?.length > 0 && (
+                   <div style={{ flex: 1 }}>
+                     <p style={{ fontSize: '9px', fontWeight: '700', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '5px' }}>Technical</p>
+                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                       {sections.skills.data.technical.map(s => (
+                         <span key={s} style={{ fontSize: '10.5px', padding: '3px 8px', background: `${accent}15`, border: `1px solid ${accent}30`, borderRadius: '4px', color: '#1e293b' }}>
+                           {s}
+                         </span>
+                       ))}
+                     </div>
+                   </div>
+                 )}
+                 {sections.skills.data.languages?.length > 0 && (
+                   <div style={{ flex: 1 }}>
+                     <p style={{ fontSize: '9px', fontWeight: '700', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '5px' }}>Languages</p>
+                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                       {sections.skills.data.languages.map(s => (
+                         <span key={s} style={{ fontSize: '10.5px', padding: '3px 8px', background: `${accent}15`, border: `1px solid ${accent}30`, borderRadius: '4px', color: '#1e293b' }}>
+                           {s}
+                         </span>
+                       ))}
+                     </div>
+                   </div>
+                 )}
+               </div>
+               {sections.skills.data.soft?.length > 0 && (
+                 <div style={{ marginTop: '12px' }}>
+                   <p style={{ fontSize: '9px', fontWeight: '700', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '5px' }}>Soft Skills</p>
+                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                     {sections.skills.data.soft.map(s => (
+                       <span key={s} style={{ fontSize: '10.5px', padding: '3px 8px', background: `${accent}15`, border: `1px solid ${accent}30`, borderRadius: '4px', color: '#1e293b' }}>
+                         {s}
+                       </span>
+                     ))}
+                   </div>
+                 </div>
+               )}
+             </div>
+           )}
 
           {sections.certifications?.visible !== false && sections.certifications?.data?.length > 0 && (
             <div style={{ marginTop: '16px' }}>

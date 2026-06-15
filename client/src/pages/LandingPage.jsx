@@ -8,11 +8,14 @@ const TEMPLATES = [
   { id: 'minimal', name: 'Minimal', desc: 'Pure whitespace, refined type', color: '#ffffff', accent: '#1a1814' },
   { id: 'executive', name: 'Executive', desc: 'Senior-level gravitas', color: '#1e293b', accent: '#94a3b8' },
   { id: 'creative', name: 'Creative', desc: 'Stand out, break rules', color: '#1a0a2e', accent: '#a855f7' },
+  { id: 'cleanFlow', name: 'Clean Flow', desc: 'Simple ATS clarity', color: '#ffffff', accent: '#2d3338' },
+  { id: 'timelessSleek', name: 'Timeless Sleek', desc: 'Taupe editorial polish', color: '#b7a29b', accent: '#ffffff' },
+  { id: 'modernOverlay', name: 'Modern Overlay', desc: 'Framed two-column impact', color: '#546874', accent: '#ffffff' },
 ]
 
 const FEATURES = [
   { icon: Zap, title: 'Instant Start', desc: 'No signup, no friction. Open the editor and start building your CV in seconds.' },
-  { icon: Layers, title: '5+ Templates', desc: 'Professionally designed layouts for every industry and seniority level.' },
+  { icon: Layers, title: '11 Templates', desc: 'Professionally designed layouts for every industry and seniority level.' },
   { icon: Sparkles, title: 'AI Cover Letters', desc: 'Claude-powered cover letters tailored to each job description in seconds.' },
   { icon: Download, title: 'PDF & DOCX Export', desc: 'High-fidelity exports that look perfect whether printed or sent digitally.' },
 ]
@@ -62,7 +65,7 @@ export default function LandingPage() {
 
           <p className="text-obsidian-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed stagger-child" style={{ animationDelay: '0.1s' }}>
             Professional CV builder with AI-powered cover letters. 
-            Five stunning templates. Instant PDF export. Zero friction.
+            Eleven stunning templates. Instant PDF export. Zero friction.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 stagger-child" style={{ animationDelay: '0.2s' }}>

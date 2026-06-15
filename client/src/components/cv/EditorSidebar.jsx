@@ -1,5 +1,5 @@
 import { useStore } from '../../store/index.js'
-import { User, Briefcase, GraduationCap, Code, FolderOpen, Award, ChevronRight } from 'lucide-react'
+import { User, Briefcase, GraduationCap, Code, FolderOpen, Award, ChevronLeft, ChevronRight } from 'lucide-react'
 import PersonalSection from './sections/PersonalSection.jsx'
 import ExperienceSection from './sections/ExperienceSection.jsx'
 import EducationSection from './sections/EducationSection.jsx'
@@ -20,6 +20,9 @@ export default function EditorSidebar({ cv, cvId, activeSection, setActiveSectio
   const { toggleSectionVisibility } = useStore()
 
   const ActiveComponent = SECTIONS.find(s => s.id === activeSection)?.component
+  const activeIndex = SECTIONS.findIndex(s => s.id === activeSection)
+  const previousSection = activeIndex > 0 ? SECTIONS[activeIndex - 1] : null
+  const nextSection = activeIndex >= 0 && activeIndex < SECTIONS.length - 1 ? SECTIONS[activeIndex + 1] : null
 
   return (
     <div className="flex h-full">
@@ -61,9 +64,29 @@ export default function EditorSidebar({ cv, cvId, activeSection, setActiveSectio
       </nav>
 
       {/* ── Section editor ── */}
-      <div className="w-72 md:w-80 flex-shrink-0 border-r border-obsidian-900 overflow-y-auto bg-obsidian-950/50">
-        <div className="p-4">
+      <div className="w-72 md:w-80 flex-shrink-0 border-r border-obsidian-900 bg-obsidian-950/50 flex flex-col min-h-0">
+        <div className="p-4 overflow-y-auto flex-1">
           {ActiveComponent && <ActiveComponent cv={cv} cvId={cvId} />}
+        </div>
+        <div className="border-t border-obsidian-900 bg-obsidian-950/95 p-3 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => previousSection && setActiveSection(previousSection.id)}
+            disabled={!previousSection}
+            className="btn-secondary justify-center px-3 py-2 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <ChevronLeft size={14} />
+            <span>Previous</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => nextSection && setActiveSection(nextSection.id)}
+            disabled={!nextSection}
+            className="btn-primary justify-center px-3 py-2 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <span>{nextSection ? `Next: ${nextSection.label}` : 'Done'}</span>
+            <ChevronRight size={14} />
+          </button>
         </div>
       </div>
     </div>

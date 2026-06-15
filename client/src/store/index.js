@@ -136,7 +136,10 @@ export const useStore = create(
         }))
       },
 
-      setActiveCV: (id) => set({ activeCvId: id, activeSection: 'personal' }),
+      setActiveCV: (id) => set(state => ({
+        activeCvId: id,
+        activeSection: state.activeCvId === id ? state.activeSection : 'personal',
+      })),
 
       updateCV: (id, updater) => {
         set(state => ({

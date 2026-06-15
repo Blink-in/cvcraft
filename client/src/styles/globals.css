@@ -159,6 +159,38 @@
     color: #1a1814;
   }
 
+  .cv-preview-pages {
+    background: white;
+    color: #1a1814;
+    overflow: visible;
+  }
+
+  .cv-preview-content {
+    background: white;
+  }
+
+  .cv-page-boundary {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 0;
+    border-top: 2px dashed rgba(201, 168, 76, 0.7);
+  }
+
+  .cv-page-boundary span {
+    position: absolute;
+    right: 12px;
+    top: -11px;
+    border: 1px solid rgba(201, 168, 76, 0.45);
+    border-radius: 999px;
+    background: #0d0c0a;
+    color: #e8d5a3;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 4px 7px;
+  }
+
   /* ── Stagger animation ── */
   .stagger-child {
     opacity: 0;
@@ -178,6 +210,26 @@
 
   /* ── Print ── */
   @media print {
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    body {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    #cv-preview-root {
+      box-shadow: none !important;
+      overflow: visible !important;
+      width: 794px !important;
+    }
+
+    .cv-page-boundary {
+      display: none !important;
+    }
+
     #cv-preview-root[data-protected-preview="true"],
     #cv-preview-root[data-protected-preview="true"] * {
       visibility: hidden !important;

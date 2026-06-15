@@ -98,7 +98,7 @@ export default function Dashboard() {
                <div className="p-4 rounded-xl bg-obsidian-800/50 border border-obsidian-700">
                  <div className="text-amber-400 font-display text-lg font-bold mb-1">1</div>
                  <h3 className="font-semibold text-obsidian-100 text-sm mb-1">Create a CV</h3>
-                 <p className="text-xs text-obsidian-400 leading-relaxed">Click "New CV" above to start building. Choose from 5 professionally designed templates that pass ATS systems.</p>
+                 <p className="text-xs text-obsidian-400 leading-relaxed">Click "New CV" above to start building. Choose from 11 professionally designed templates that pass ATS systems.</p>
                </div>
                <div className="p-4 rounded-xl bg-obsidian-800/50 border border-obsidian-700">
                  <div className="text-amber-400 font-display text-lg font-bold mb-1">2</div>
@@ -251,4 +251,8 @@ const TEMPLATE_COLORS = {
   creative: '#a855f7',
   elegant: '#8b7355',
   professional: '#42a5f5',
+  cleanFlow: '#2d3338',
+  simpleLinear: '#111111',
+  timelessSleek: '#b7a29b',
+  modernOverlay: '#546874',
 }

@@ -6,7 +6,7 @@ const STATS = [
   { number: '50,000+', label: 'CVs created' },
   { number: '120+',    label: 'Countries reached' },
   { number: '4.8/5',  label: 'User rating' },
-  { number: '7',       label: 'Professional templates' },
+  { number: '11',      label: 'Professional templates' },
 ]
 
 const VALUES = [
