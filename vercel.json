@@ -10,6 +10,7 @@
     { "handle": "filesystem" },
     { "src": "/ads.txt", "dest": "/ads.txt" },
     { "src": "/sitemap.xml", "dest": "/sitemap.xml" },
+    { "src": "/sitemap-v2.xml", "dest": "/sitemap-v2.xml" },
     { "src": "/robots.txt", "dest": "/robots.txt" },
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/(.*)", "dest": "/index.html", "methods": ["GET"] }
