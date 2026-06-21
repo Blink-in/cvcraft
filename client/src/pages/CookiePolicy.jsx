@@ -20,7 +20,7 @@ export default function CookiePolicy() {
           <div className="space-y-8 text-sm text-obsidian-300 leading-relaxed">
             <section>
               <h2 className="text-base font-semibold text-obsidian-100 mb-2">What Are Cookies?</h2>
-              <p>Cookies are small text files stored on your device by your browser. They are widely used to make websites work, remember your preferences, and deliver advertising. CVCraft uses a combination of browser localStorage (first-party) and third-party cookies set by Google AdSense.</p>
+              <p>Cookies are small text files stored on your device by your browser. They are widely used to make websites work, remember your preferences, and deliver advertising. CVCraft uses browser localStorage for the builder and may use third-party advertising cookies on selected monetization pages where ads are intentionally placed.</p>
             </section>
 
             <section>

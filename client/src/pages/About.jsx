@@ -75,7 +75,7 @@ export default function About() {
             <p>CVCraft started as a personal project. The founder had spent hours trying to get a Word CV template to stay formatted correctly, only to have the whole layout collapse when a single bullet point ran too long. After paying $30 for a "professional CV service" that delivered a bland PDF with no way to edit it, they decided to build something better.</p>
             <p>The first version was a simple React app with one template. It got shared in a WhatsApp group of job seekers in Lagos. Within a week, thousands of people had used it. That was the moment we realised how badly the world needed a free, professional CV tool that just worked.</p>
             <p>Today, CVCraft is used by job seekers in over 120 countries. Students applying for their first job, experienced professionals switching careers, executives updating their boards — all using the same simple tool. We're proud of that.</p>
-            <p>We keep the core tool free by offering optional premium downloads and displaying non-intrusive ads through Google AdSense. Every line of ad revenue goes back into improving the product.</p>
+            <p>We keep the core tool free with optional premium downloads and carefully scoped advertising on monetization pages. Every line of revenue goes back into improving the product.</p>
           </div>
         </div>
 

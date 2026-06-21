@@ -59,7 +59,7 @@ export default function TermsOfService() {
 
             <section>
               <h2 className="text-base font-semibold text-obsidian-100 mb-2">6. Advertising</h2>
-              <p>CVCraft displays advertisements through Google AdSense. These ads help us keep the core product free. By using CVCraft, you acknowledge that you may see advertising content. We do not endorse third-party advertisers and are not responsible for their content. You can opt out of personalised ads via <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:underline">Google's ad settings</a>.</p>
+              <p>CVCraft may display advertisements through Google AdSense or another approved ad provider on selected monetization pages, such as the CV download unlock page. These ads help us keep the core product free. We do not place ads on empty dashboards, editor-only screens, alerts, or navigation-only views. We do not endorse third-party advertisers and are not responsible for their content. You can opt out of personalised ads via <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:underline">Google's ad settings</a>.</p>
             </section>
 
             <section>

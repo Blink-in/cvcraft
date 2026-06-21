@@ -62,7 +62,7 @@ export default function PrivacyPolicy() {
                 CVCraft does not control the cookies or tracking used by Google AdSense. Google's Privacy Policy governs how Google handles data collected through these ads: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-amber-400 hover:underline">policies.google.com/privacy</a>.
               </p>
               <p className="mt-2">
-                We use AdSense auto ads, which may place ads in various positions on our pages. We do not use personalised or interest-based ads that we control directly. Ad placements are clearly marked "Advertisement" or "Sponsored".
+                We load advertising code only on pages where ads are intentionally placed, such as the CV download unlock page. We do not place Google-served ads on empty dashboards, editor-only screens, alerts, or navigation-only views. Ad placements are clearly marked "Advertisement" or "Sponsored".
               </p>
             </section>
 

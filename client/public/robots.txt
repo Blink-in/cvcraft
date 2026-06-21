@@ -1,13 +1,19 @@
 
 
 
+User-agent: Mediapartners-Google
+Allow: /unlock/
+Allow: /
+
 User-agent: *
 Allow: /
 
 # Block dynamic editor pages — no SEO value, unique per user
 Disallow: /cv/
 Disallow: /cover-letter/
+Disallow: /unlock/
 Disallow: /report-issue
+Disallow: /dashboard
 
 # Block API routes
 Disallow: /api/

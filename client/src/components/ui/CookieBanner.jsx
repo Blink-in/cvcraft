@@ -51,7 +51,7 @@ export default function CookieBanner() {
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-obsidian-100 mb-1">We use cookies</p>
             <p className="text-xs text-obsidian-400 leading-relaxed">
-              CVCraft uses cookies to save your work and to display ads via Google AdSense that help keep this tool free.{' '}
+              CVCraft uses local storage to save your work and may use ad cookies on selected monetization pages.{' '}
               <button
                 onClick={() => navigate('/cookie-policy')}
                 className="text-amber-400 hover:underline"
