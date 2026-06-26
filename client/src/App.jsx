@@ -12,6 +12,7 @@ import Contact from './pages/Contact.jsx'
 import CookiePolicy from './pages/CookiePolicy.jsx'
 import CvWritingGuide from './pages/CvWritingGuide.jsx'
 import UnlockDownload from './pages/UnlockDownload.jsx'
+import ThankYou from './pages/ThankYou.jsx'
 
 function PageMeta({ title, description, noindex, canonical }) {
   const head = document.head
@@ -90,6 +91,7 @@ const NOINDEXED = {
   '/dashboard': { title: 'Dashboard - CVCraft', description: 'Manage your saved CV and cover letter documents.' },
   '/cv/:id': { title: 'CV Editor - CVCraft', description: 'Edit your CV with professional templates.' },
   '/unlock/:id': { title: 'Unlock CV Download - CVCraft', description: 'Choose a payment or ad-supported option to unlock your CV download.' },
+  '/thank-you/:id': { title: 'Thank You - CVCraft', description: 'Your CV purchase has been completed.' },
   '/cover-letter/:id': { title: 'Cover Letter Editor - CVCraft', description: 'Edit your cover letter with AI assistance.' },
   '/report-issue': { title: 'Report an Issue - CVCraft', description: 'Report a bug or issue with CVCraft.' },
 }
@@ -109,6 +111,7 @@ const NOINDEXED_PAGES = {
   '/dashboard': Dashboard,
   '/cv/:id': CVBuilder,
   '/unlock/:id': UnlockDownload,
+  '/thank-you/:id': ThankYou,
   '/cover-letter/:id': CoverLetterBuilder,
   '/report-issue': ReportIssue,
 }

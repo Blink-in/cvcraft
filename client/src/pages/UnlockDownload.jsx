@@ -64,7 +64,7 @@ export default function UnlockDownload() {
         cvTitle: cv.title || 'Untitled CV',
         unlockType: 'download',
         customerEmail: customerEmail.trim(),
-        redirectUrl: `${window.location.origin}/cv/${cv.id}?payment=success`,
+        redirectUrl: `${window.location.origin}/thank-you/${cv.id}?payment=success`,
       })
       updateCVPayment(cv.id, { lastCheckoutAt: new Date().toISOString() })
       window.location.href = data.checkoutUrl
