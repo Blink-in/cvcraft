@@ -13,4 +13,4 @@ Disallow: /dashboard
 Disallow: /api/
 
 # Sitemap location
-Sitemap: https://www.getcvcraft.com/sitemap-v2.xml
+Sitemap: https://www.getcvcraft.com/sitemap.xml

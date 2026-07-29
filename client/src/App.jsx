@@ -14,6 +14,8 @@ import CvWritingGuide from './pages/CvWritingGuide.jsx'
 import UnlockDownload from './pages/UnlockDownload.jsx'
 import ThankYou from './pages/ThankYou.jsx'
 
+const SITE_ORIGIN = 'https://www.getcvcraft.com'
+
 function PageMeta({ title, description, noindex, canonical }) {
   const head = document.head
   let titleEl = head.querySelector('title')
@@ -45,7 +47,7 @@ function PageMeta({ title, description, noindex, canonical }) {
     canonicalEl.rel = 'canonical'
     head.appendChild(canonicalEl)
   }
-  canonicalEl.href = canonical || window.location.origin + window.location.pathname
+  canonicalEl.href = canonical || `${SITE_ORIGIN}${window.location.pathname}`
 
   const setMeta = (selector, attr, value) => {
     let el = head.querySelector(selector)
@@ -77,8 +79,8 @@ function MetaPage({ meta, Page }) {
 }
 
 const INDEXED = {
-  '/': { title: 'Free CV Builder Online - Create a Professional CV | CVCraft', description: 'Create a professional CV online with free ATS-friendly templates, live preview, cover letters, and PDF export. No signup required.', canonical: 'https://www.getcvcraft.com/' },
-  '/cv-builder': { title: 'Free CV Builder Online - Professional CV Maker | CVCraft', description: 'Use CVCraft as a free online CV builder and CV maker. Choose ATS-friendly CV templates, customize your layout, and export your CV.', canonical: 'https://www.getcvcraft.com/cv-builder' },
+  '/': { title: 'Free CV Builder Online - Create a Professional CV | CVCraft', description: 'Create a professional CV online with free ATS-friendly templates, live preview, cover letters, and PDF export. No signup required.', canonical: `${SITE_ORIGIN}/` },
+  '/cv-builder': { title: 'Free CV Builder Online - Professional CV Maker | CVCraft', description: 'Use CVCraft as a free online CV builder and CV maker. Choose ATS-friendly CV templates, customize your layout, and export your CV.', canonical: `${SITE_ORIGIN}/cv-builder` },
   '/about': { title: 'About CVCraft', description: 'Learn about CVCraft, our mission, values, and the team behind the professional CV builder.' },
   '/contact': { title: 'Contact Us - CVCraft', description: 'Get in touch with the CVCraft team. We read every message and reply promptly.' },
   '/privacy-policy': { title: 'Privacy Policy - CVCraft', description: 'How CVCraft handles your data. Privacy-first CV builder that respects your information.' },

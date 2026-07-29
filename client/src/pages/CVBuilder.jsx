@@ -173,7 +173,7 @@ export default function CVBuilder() {
   )
 }
 
-function getPaymentProviderFromReturn(searchParams, data) {
+export function getPaymentProviderFromReturn(searchParams, data) {
   const provider = searchParams.get('provider') || searchParams.get('paymentProvider')
   const source = data?.entitlements?.find(e => e.source && e.source !== 'rewarded_ad')?.source
   return provider || source || 'paystack'

@@ -3,16 +3,16 @@
   "buildCommand": "npm run install:all && npm run build",
   "outputDirectory": "client/dist",
   "framework": "vite",
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" }
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "getcvcraft.com" }],
+      "destination": "https://www.getcvcraft.com/$1",
+      "permanent": true
+    }
   ],
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/ads.txt", "dest": "/ads.txt" },
-    { "src": "/sitemap.xml", "dest": "/sitemap.xml" },
-    { "src": "/sitemap-v2.xml", "dest": "/sitemap-v2.xml" },
-    { "src": "/robots.txt", "dest": "/robots.txt" },
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/(.*)", "dest": "/index.html", "methods": ["GET"] }
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/:path*" },
+    { "source": "/:path*", "destination": "/index.html" }
   ]
 }
